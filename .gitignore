@@ -1,6 +1,7 @@
 .python-version
 no_git_*
 *.sqlite3
+.DS_Store
 
 
 # Byte-compiled / optimized / DLL files

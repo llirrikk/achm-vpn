@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        document.getElementById('nav-nodes').classList.add('active');
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Список устройств</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="col-md-3">Название</th>
+                <th class="col-md-3">Система</th>
+                <th class="col-md-5">Подключения</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for node in nodes %}
+            <tr class="align-middle">
+                <td>{{ node.name }}</td>
+                <td>
+                    {{ node.system }} &emsp;
+                    {% if node.system == 'UNIX' %}
+                    <img src="https://img.icons8.com/color/48/000000/linux.png" height="48px" class="img-fluid"/>
+                    {% elif node.system == "CISCO" %}
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/64/Cisco_logo.svg" height="48px"/>
+                    {% elif node.system == "OPENWRT" %}
+                    <img src="https://static-00.iconduck.com/assets.00/openwrt-icon-441x512-qp61dzma.png" height="48px"/>
+                    {% elif node.system == "MIKROTIK" %}
+                    <img src="https://merch.mikrotik.com/cdn/shop/files/512.png?v=1657867177" height="48px"/>
+                    {% endif %}
+                </td>
+
+                <td>
+                {{ node.connections|join(", ", attribute='protocol') }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="mt-4">
+        <a class="btn btn-success" href="create_node/">Создать</a>
+    </div>
+</div>
+{% endblock %}

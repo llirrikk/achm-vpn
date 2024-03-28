@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        document.getElementById('nav-nodes').classList.add('active');
+    });
+
+    function createNode() {
+        const name = document.getElementById('nodeName').value;
+        const system = document.getElementById('systemSelect').value;
+        const connection1 = {
+            protocol: document.getElementById('connectionProtocol').value,
+            host: document.getElementById('connectionHost').value,
+            port: parseInt(document.getElementById('connectionPort').value),
+            login: document.getElementById('connectionLogin').value,
+            password: document.getElementById('connectionPassword').value
+        };
+
+        const nodeData = {
+            name: name,
+            system: system,
+            connections: [connection1]
+        };
+
+        console.log(nodeData);
+        fetch('/nodes/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(nodeData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to create node');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Failed to create node: {error`);
+        });
+    }
+</script>
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+    <h1>Создать устройство</h1>
+    <form id="createNodeForm" action="/pages/all_nodes">
+        <div class="form-group">
+            <label for="nodeName">Название</label>
+            <input type="text" class="form-control" id="nodeName" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="systemSelect">Система</label>
+            <select class="form-control" id="systemSelect" required>
+                <option value="UNIX">UNIX</option>
+                <option value="CISCO">CISCO</option>
+                <option value="OPENWRT">OPENWRT</option>
+                <option value="MIKROTIK">MIKROTIK</option>
+            </select>
+        </div>
+        <div class="form-group mt-3" id="connectionsContainer">
+            <label>Подключения</label>
+            <div class="connection">
+                <div class="form-row mt-1">
+                    <div class="col mt-1">
+                        <select class="form-control" id="connectionProtocol" required>
+                            <option value="TELNET">TELNET</option>
+                            <option value="SSH">SSH</option>
+                        </select>
+                    </div>
+                    <div class="col mt-1">
+                        <input type="text" class="form-control" placeholder="Хост" id="connectionHost" required>
+                    </div>
+                    <div class="col mt-1">
+                        <input type="number" class="form-control" placeholder="Порт" id="connectionPort" required>
+                    </div>
+                    <div class="col mt-1">
+                        <input type="text" class="form-control" placeholder="Логин" id="connectionLogin" required>
+                    </div>
+                    <div class="col mt-1">
+                        <input type="password" class="form-control" placeholder="Пароль" id="connectionPassword" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button onclick="createNode()" class="btn btn-success">Создать устройство</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

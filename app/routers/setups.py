@@ -12,6 +12,6 @@ setups_router = APIRouter(
 
 @setups_router.post("/")
 async def setup_nodes(setup_schema: SetupSchema, db_session: Session = Depends(get_db)):
-    print(setup_schema)
+    # setup server node
 
     return {"status": "ok"}
