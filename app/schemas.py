@@ -40,6 +40,18 @@ class NodeSchema(BaseModel):
     class Meta:
         orm_model = Node
 
+    def get_ssh_connection(self) -> ConnectionSchema | None:
+        for connection in self.connections:
+            if connection.protocol == ConnectionProtocolSchema.SSH:
+                return connection
+        return None
+
+    def get_telnet_connection(self) -> ConnectionSchema | None:
+        for connection in self.connections:
+            if connection.protocol == ConnectionProtocolSchema.TELNET:
+                return connection
+        return None
+
 
 class NodeSchemaWithID(NodeSchema):
     id: int
@@ -48,10 +60,10 @@ class NodeSchemaWithID(NodeSchema):
 class ProtocolSchema(enum.StrEnum):
     WIREGUARD = "WIREGUARD"
     L2TP = "L2TP"
-    OPENVPN = "OPENVPN"
+    PP2P = "PP2P"
 
 
 class SetupSchema(BaseModel):
-    server: NodeSchema | None = None
-    clients: list[NodeSchema] = []
+    server_id: int | None = None
+    clients_id: list[int] = []
     protocol: ProtocolSchema

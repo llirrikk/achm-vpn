@@ -1,7 +1,8 @@
 import logging
-import time
 
 import paramiko
+
+from app.utils.utils import TimeExecution
 
 logging.basicConfig()
 logging.getLogger("paramiko").setLevel(logging.INFO)
@@ -11,14 +12,20 @@ class SSHManager:
     def __init__(self, ssh_connection: paramiko.SSHClient):
         self.ssh = ssh_connection
 
-    def send(self, command: str, timeout: int = 10) -> str:
+    def send(self, command: str, timeout: int = 120) -> str:
         stdin, stdout, stderr = self.ssh.exec_command(command, timeout=timeout)
-        if stderr.read():
-            print(f"Command: {command}")
-            print(f"Exit code: {stdout.channel.recv_exit_status()}")
-            print(f"Error: {stderr.read().decode()}")
-            print(f"Output: {stdout.read().decode()}")
+
+        with TimeExecution():
+            if stderr.read():
+                print(f"Command: {command}")
+                print(f"Exit code: {stdout.channel.recv_exit_status()}")
+                print(f"Error: {stderr.read().decode()}")
+                print(f"Output: {stdout.read().decode()}")
         return stdout.read().decode()
+
+    def send_file(self, local_file: str, remote_file: str):
+        with self.ssh.open_sftp() as sftp:
+            sftp.put(local_file, remote_file)
 
 
 class SSHConnection:

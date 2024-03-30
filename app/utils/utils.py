@@ -1,3 +1,7 @@
+from time import time
+from typing import Self
+
+
 def is_pydantic(obj: object) -> bool:
     """Checks whether an object is pydantic."""
     return type(obj).__class__.__name__ == "ModelMetaclass"
@@ -25,3 +29,15 @@ def parse_pydantic_schema(schema):
                 "Found nested Pydantic model but Meta.orm_model was not specified."
             )
     return parsed_schema
+
+
+class TimeExecution:
+    def __enter__(self) -> Self:
+        self.start = time()
+        print("[TimeExecution] Start")
+        return self
+
+    def __exit__(self, *args):
+        self.end = time()
+        self.interval = self.end - self.start
+        print(f"[TimeExecution] End. Elapsed time: {self.interval:.3f}s")
