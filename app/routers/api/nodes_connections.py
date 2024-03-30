@@ -11,7 +11,8 @@ from app.schemas import (
 from app.utils.utils import parse_pydantic_schema
 
 node_connections_router = APIRouter(
-    prefix="/nodes/connections",
+    prefix="/api/nodes/connections",
+    tags=["api"],
 )
 
 
@@ -37,7 +38,7 @@ async def create_connection(
     return {"status": "ok", "connection_id": connection.id}
 
 
-@node_connections_router.post("/{node_id}/get/<connection_type>")
+@node_connections_router.get("/{node_id}/get/<connection_type>")
 async def get_connection(
     node_id: int,
     connection_type: ConnectionProtocolSchema,

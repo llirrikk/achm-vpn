@@ -5,6 +5,22 @@
     document.addEventListener("DOMContentLoaded", function(){
         document.getElementById('nav-nodes').classList.add('active');
     });
+
+    function deleteNode(nodeId) {
+        fetch(`/api/nodes/delete/${nodeId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete node');
+            }
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Failed to delete node: ${error}`);
+        });
+    }
 </script>
 {% endblock %}
 
@@ -17,6 +33,7 @@
                 <th class="col-md-3">Название</th>
                 <th class="col-md-3">Система</th>
                 <th class="col-md-5">Подключения</th>
+                <th class="col-md-1"></th>
             </tr>
         </thead>
         <tbody>
@@ -38,6 +55,11 @@
 
                 <td>
                 {{ node.connections|join(", ", attribute='protocol') }}
+                </td>
+                
+                <!-- Удалить -->
+                <td>
+                    <button class="btn btn-danger" onclick="deleteNode({{ node.id }})">X</button>
                 </td>
             </tr>
             {% endfor %}

@@ -41,6 +41,10 @@ class NodeSchema(BaseModel):
         orm_model = Node
 
 
+class NodeSchemaWithID(NodeSchema):
+    id: int
+
+
 class ProtocolSchema(enum.StrEnum):
     WIREGUARD = "WIREGUARD"
     L2TP = "L2TP"

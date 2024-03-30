@@ -2,9 +2,9 @@ from fastapi import FastAPI
 
 from app.models.base import AbstractBaseModel
 from app.models.sql_database import engine
-from app.routers.nodes import node_router
-from app.routers.nodes_connections import node_connections_router
-from app.routers.setups import setups_router
+from app.routers.api.nodes import node_router
+from app.routers.api.nodes_connections import node_connections_router
+from app.routers.api.setups import setups_router
 from app.routers.pages.router import pages_router
 from app.schemas import AppStatusSchema
 

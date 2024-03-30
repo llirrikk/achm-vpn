@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
-
 from sqlalchemy.orm import Session
 
 from app.models.sql_database import get_db
 from app.schemas import SetupSchema
 
 setups_router = APIRouter(
-    prefix="/setups",
+    prefix="/api/setups",
+    tags=["api"],
 )
 
 
