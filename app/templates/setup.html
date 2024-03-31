@@ -5,12 +5,215 @@
     document.addEventListener("DOMContentLoaded", function(){
         document.getElementById('nav-setup').classList.add('active');
     });
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+        toggleForm();
+
+        document.getElementById('system').addEventListener('change', function() {
+            toggleForm();
+        });
+
+        document.getElementById('protocol').addEventListener('change', function() {
+            toggleForm();
+        });
+
+        document.getElementById('role').addEventListener('change', function() {
+            toggleForm();
+        });
+    });
+    
+    function toggleForm() {
+        var system = document.getElementById('system').value;
+        var protocol = document.getElementById('protocol').value;
+        var role = document.getElementById('role').value;
+        var unixWgServerForm = document.getElementById('unix-wg-server-form');
+        var SubmitButton = document.getElementById('submit-start-settings-btn');
+
+
+        if (system === 'UNIX' && protocol === 'WIREGUARD' && role === 'SERVER') {
+            unixWgServerForm.style.display = 'block';
+            unixWgServerForm.classList.add('use-this-form');
+        } else {
+            unixWgServerForm.style.display = 'none';
+            unixWgServerForm.classList.remove('use-this-form');
+        }
+    }
+
+    function startSetup() {
+        function _displayLoader() {
+            document.getElementById('submit-start-settings-btn__loader').style.display = 'block';
+            document.getElementById('submit-start-settings-btn__loader').classList.remove("col-0");
+            document.getElementById('submit-start-settings-btn__loader').classList.add("col-1");
+            document.getElementById('submit-start-settings-btn__text').classList.remove("col");
+            document.getElementById('submit-start-settings-btn__text').classList.add("col-5");
+        }
+        function _hideLoader() {
+            document.getElementById('submit-start-settings-btn__loader').style.display = 'none';
+            document.getElementById('submit-start-settings-btn__loader').classList.remove("col-1");
+            document.getElementById('submit-start-settings-btn__loader').classList.add("col-0");
+            document.getElementById('submit-start-settings-btn__text').classList.remove("col-5");
+            document.getElementById('submit-start-settings-btn__text').classList.add("col");
+        }
+
+        var activeForm = document.querySelector('form[class="use-this-form"]');
+        var formData = new FormData(activeForm);
+        // URL with Node ID: http://0.0.0.0:8000/pages/setup?node_id=1
+        const getNodeIDFromURL = new URLSearchParams(window.location.search).get('node_id');
+
+
+        var jsonData = {};
+
+        // Convert FormData to JSON
+        for (var [key, value] of formData.entries()) {
+            jsonData[key] = value;
+        }
+        jsonData['server_id'] = getNodeIDFromURL;
+
+        console.log(jsonData);
+
+        _displayLoader();
+        // Make POST request
+        fetch('/api/setups/unix-wg-server', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Handle response data
+            _hideLoader();
+            console.log(data);
+        })
+        .catch(error => {
+            // Handle errors
+            _hideLoader();
+            console.error('There was an error with the POST request:', error);
+        });
+    }
+
+    function copyValuesFromPlaceholdersToInputs() {
+        var placeholders = document.querySelectorAll('input[placeholder]');
+        placeholders.forEach(function(placeholder) {
+            placeholder.value = placeholder.placeholder;
+        });
+    }
 </script>
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>Настройка</h1>
+    <form id="form-select-system-protocol-role">
+        <div class="row mb-4">
+            <div class="col">
+                <label for="system">Система</label>
+                <select id="system" name="system" class="form-select">
+                    <option value="UNIX">UNIX</option>
+                    <option value="CISCO">CISCO</option>
+                    <option value="OPENWRT">OPENWRT</option>
+                    <option value="MIKROTIK">MIKROTIK</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="protocol">Протокол</label>
+                <select id="protocol" name="protocol" class="form-select">
+                    <option value="WIREGUARD">WIREGUARD</option>
+                    <option value="L2TP">L2TP</option>
+                    <option value="PP2P">PP2P</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="role">Роль</label>
+                <select id="role" name="role" class="form-select">
+                    <option value="SERVER">SERVER</option>
+                    <option value="CLIENT">CLIENT</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <form id="unix-wg-server-form" method="post" action="/setups/unix-wg-server" style="display:none;">
+        <div class="form-group mb-3">
+            <label for="address_mask">Адрес, который назначается (виртуальному) сетевому интерфейсу</label>
+            <input type="text" id="address_mask" name="address_mask" class="form-control" aria-describedby="address_mask_help" placeholder="10.0.0.1/24" required>
+            <small id="address_mask_help" class="form-text text-muted">Определяет, в какой диапазон адресов локальный узел должен направлять трафик. В зависимости от того, является ли узел простым клиентом, подключающимся к подсети VPN, или резервным сервером, который ретранслирует трафик между несколькими клиентами, для этого может быть установлен один IP-адрес самого узла (указанный в обозначении CIDR), например 192.0.2.3/32, или диапазон подсетей IPv4/IPv6, для которых узел может маршрутизировать трафик.</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="port">Порт</label>
+            <input type="number" id="port" name="port" class="form-control" aria-describedby="port_help" placeholder="51830" required>
+            <small id="port_help" class="form-text text-muted">Когда узел работает как общедоступный сервер передачи данных, он должен строго определить порт для прослушивания входящих VPN-подключений из общедоступного Интернета. Клиенты, не выполняющие функции ретрансляторов, не должны устанавливать это значение.</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="interface">Интерфейс</label>
+            <input type="text" id="interface" name="interface" class="form-control" placeholder="ens4" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="server_client_allowed_ips">Разрешенные IP-адреса для сервера</label>
+            <input type="text" id="server_client_allowed_ips" name="server_client_allowed_ips" class="form-control" aria-describedby="client_all_ip_help" placeholder="10.0.0.2/32" required>
+            <small id="server_client_all_ip_help" class="form-text text-muted">Определяет диапазоны IP-адресов, для которых узел будет перенаправлять трафик. Для простых клиентов это обычно один адрес (VPN-адрес самого простого клиента). Для серверов передачи данных – диапазон IP-адресов или подсетей, для которых сервер ретрансляции способен перенаправлять трафик. Несколько IP-адресов и подсетей могут быть указаны с использованием обозначений CIDR IPv4 или IPv6, разделенных запятыми (начиная с одного адреса /32 или /128, вплоть до 0.0.0.0/0 и ::/0, чтобы указать маршрут по умолчанию для отправки всего интернет-трафика и VPN-трафика через этот узел).</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="base_directory">Директория для сохранения конфигурационных файлов сервера</label>
+            <input type="text" id="base_directory" name="base_directory" class="form-control" placeholder="/etc/wireguard" required>
+        </div>
+        
+        <hr class="mt-2 mb-2">
+
+        <div class="form-group mb-3">
+            <label for="client_config_directory">Файл для сохранения конфигурации клиента</label>
+            <input type="text" id="client_config_directory" name="client_config_directory" class="form-control" placeholder="/home/debian/client_wg.conf" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="client_address_mask">IP-адрес клиента</label>
+            <input type="text" id="client_address_mask" name="client_address_mask" class="form-control" placeholder="10.0.0.2/32" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="client_dns">Клиентский DNS-сервер</label>
+            <input type="text" id="client_dns" name="client_dns" class="form-control" placeholder="8.8.8.8" required>
+            <small class="form-text text-muted">Сервер доменных имен, используемый для преобразования имен хостов в IP-адреса для клиентов VPN</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="client_endpoint_host">IP-адрес сервера</label>
+            <input type="text" id="client_endpoint_host" name="client_endpoint_host" class="form-control" placeholder="192.168.1.122" required>
+            <small class="form-text text-muted">Определяет общедоступный адрес для удаленного узла. Это следует не учитывать для узлов, находящихся за NAT, или узлов, у которых нет стабильной общедоступной пары IP:ПОРТ. Как правило, это нужно определить только на главном сервере, но это также может быть определено на других общедоступных узлах со стабильными IP-адресами.</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="client_endpoint_port">Порт сервера</label>
+            <input type="number" id="client_endpoint_port" name="client_endpoint_port" class="form-control" placeholder="51830" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="client_allowed_ips">Разрешенные IP-адреса для клиента</label>
+            <input type="text" id="client_allowed_ips" name="client_allowed_ips" class="form-control" placeholder="0.0.0.0/0" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="client_persistent_keepalive">Таймаут Ping-запросов клиента</label>
+            <input type="number" id="client_persistent_keepalive" name="client_persistent_keepalive" class="form-control" placeholder="20" required>
+            <small>Если соединение проходит с узла за NAT на общедоступный узел, узел, расположенный за NAT, должен регулярно отправлять исходящий ping-запрос, чтобы поддерживать двунаправленное соединение в рабочем состоянии в таблице подключений маршрутизатора NAT.</small>
+        </div>
+
+    </form>
+
+    <button type="Настроить" id="submit-start-settings-btn" class="btn btn-primary mt-4 mb-5" onclick="startSetup()">
+        <div class="row">
+            <div id="submit-start-settings-btn__loader" class="col-0" style="display: none;">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Настройка...</span>
+                </div>
+            </div>
+            <span id="submit-start-settings-btn__text" class="col">Настроить</span>
+        </div>
+    </button>
     
+
+
+    <button type="placeholders2imputs" class="btn btn-secondary mt-4 mb-5" onclick="copyValuesFromPlaceholdersToInputs()">copyValuesFromPlaceholdersToInputs</button>
+
 </div>
 {% endblock %}

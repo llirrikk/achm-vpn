@@ -30,8 +30,8 @@ function appendLineToFileIfNotExists() {
 	grep -qF -- "${line}" "${file}" || echo "${line}" >> "${file}"
 }
 
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y wireguard
+# sudo apt update && sudo apt upgrade -y
+# sudo apt install -y wireguard
 
 sudo wg genkey | sudo tee "${WG_BASE_DIRECTORY}/privatekey" | sudo wg pubkey | sudo tee "${WG_BASE_DIRECTORY}/publickey"
 server_private_key=$(sudo cat "${WG_BASE_DIRECTORY}/privatekey")

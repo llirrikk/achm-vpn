@@ -1,7 +1,7 @@
 import enum
 from typing import Literal
 
-from pydantic import BaseModel, SecretStr, validator
+from pydantic import BaseModel, NonNegativeInt, SecretStr, validator
 
 from app.enums import ConnectionProtocolSchema, SystemsSchema
 from app.models.nodes import Connection, Node
@@ -63,7 +63,19 @@ class ProtocolSchema(enum.StrEnum):
     PP2P = "PP2P"
 
 
-class SetupSchema(BaseModel):
-    server_id: int | None = None
-    clients_id: list[int] = []
-    protocol: ProtocolSchema
+class SettingsUnixWGServerSchema(BaseModel):
+    server_id: int
+
+    address_mask: str
+    port: NonNegativeInt
+    interface: str
+    server_client_allowed_ips: str
+    base_directory: str
+
+    client_config_directory: str
+    client_address_mask: str
+    client_dns: str
+    client_endpoint_host: str
+    client_endpoint_port: NonNegativeInt
+    client_allowed_ips: str
+    client_persistent_keepalive: NonNegativeInt

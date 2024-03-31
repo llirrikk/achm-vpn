@@ -13,6 +13,7 @@ class SSHManager:
         self.ssh = ssh_connection
 
     def send(self, command: str, timeout: int = 120) -> str:
+        print(f"Sending command: {command}")
         stdin, stdout, stderr = self.ssh.exec_command(command, timeout=timeout)
 
         with TimeExecution():
@@ -24,8 +25,9 @@ class SSHManager:
         return stdout.read().decode()
 
     def send_file(self, local_file: str, remote_file: str):
+        print(f"Sending file {local_file} to {remote_file}")
         with self.ssh.open_sftp() as sftp:
-            sftp.put(local_file, remote_file)
+            sftp.put(local_file, remote_file, confirm=False)
 
 
 class SSHConnection:

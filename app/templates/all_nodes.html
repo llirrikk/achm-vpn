@@ -34,6 +34,7 @@
                 <th class="col-md-3">Система</th>
                 <th class="col-md-5">Подключения</th>
                 <th class="col-md-1"></th>
+                <th class="col-md-1"></th>
             </tr>
         </thead>
         <tbody>
@@ -55,6 +56,11 @@
 
                 <td>
                 {{ node.connections|join(", ", attribute='protocol') }}
+                </td>
+                
+                <!-- Настроить -->
+                <td>
+                    <a href="setup?node_id={{ node.id }}">Настроить</a>
                 </td>
                 
                 <!-- Удалить -->
