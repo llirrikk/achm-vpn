@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import TypeAdapter
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,15 @@ async def get_all_nodes(
     return type_adapter.validate_python(nodes)
 
 
+@node_router.get("/get/{node_id}")
+async def get_node(node_id: int, db_session: Session = Depends(get_db)):
+    node = db_session.query(Node).filter(Node.id == node_id).first()
+    if not node:
+        return JSONResponse({"status": "error", "message": "Node not found"}, 404)
+    type_adapter = TypeAdapter(NodeSchemaWithID)
+    return type_adapter.validate_python(node)
+
+
 @node_router.post("/create")
 async def create_node(node_schema: NodeSchema, db_session: Session = Depends(get_db)):
     parsed_schema = parse_pydantic_schema(node_schema)
@@ -36,7 +46,7 @@ async def create_node(node_schema: NodeSchema, db_session: Session = Depends(get
 async def delete_node(node_id: int, db_session: Session = Depends(get_db)):
     node = db_session.query(Node).filter(Node.id == node_id).first()
     if not node:
-        return {"status": "error", "message": "Node not found"}
+        return JSONResponse({"status": "error", "message": "Node not found"}, 404)
     db_session.delete(node)
     db_session.commit()
     return {"status": "ok"}

@@ -63,6 +63,9 @@ class ProtocolSchema(enum.StrEnum):
     PP2P = "PP2P"
 
 
+# Settings schemas
+
+
 class SettingsUnixWGServerSchema(BaseModel):
     server_id: int
 
@@ -79,3 +82,8 @@ class SettingsUnixWGServerSchema(BaseModel):
     client_endpoint_port: NonNegativeInt
     client_allowed_ips: str
     client_persistent_keepalive: NonNegativeInt
+
+
+class SettingsCustomSchema(BaseModel):
+    server_id: int
+    commands: list[str]

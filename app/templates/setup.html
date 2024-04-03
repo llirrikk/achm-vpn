@@ -2,6 +2,53 @@
 
 {% block head %}
 <script>
+    function showNotifySuccess(message, additional) {
+        $.notify({
+            // options
+            title: `<strong>${message}</strong>`,
+            message: `<pre>${additional}</pre>`,
+        icon: 'glyphicon glyphicon-ok',
+            url: 'https://github.com/mouse0270/bootstrap-notify',
+            target: '_blank'
+        },{
+            // settings
+            element: 'body',
+            //position: null,
+            type: "success",
+            allow_dismiss: true,
+            //newest_on_top: false,
+            showProgressbar: false,
+            placement: {
+                from: "top",
+                align: "center"
+            },
+            offset: 20,
+            spacing: 10,
+            z_index: 1031,
+            delay: 3300,
+            timer: 1000,
+            url_target: '_blank',
+            mouse_over: null,
+            animate: {
+                enter: 'animated fadeInDown',
+                exit: 'animated fadeOutRight'
+            },
+            onShow: null,
+            onShown: null,
+            onClose: null,
+            onClosed: null,
+            icon_type: 'class',
+        });
+    }
+    function getActiveForm() {
+        var activeForm = document.getElementsByClassName('use-this-form');
+        if (activeForm.length > 1) {
+            alert('Error: More than one form is active!');
+        } else if (activeForm.length === 0) {
+            alert('Error: No form is active!');
+        }
+        return activeForm[0];
+    }
     document.addEventListener("DOMContentLoaded", function(){
         document.getElementById('nav-setup').classList.add('active');
     });
@@ -9,34 +56,62 @@
     document.addEventListener("DOMContentLoaded", (event) => {
         toggleForm();
 
-        document.getElementById('system').addEventListener('change', function() {
-            toggleForm();
+        const togglers = ['system', 'protocol', 'role', 'custom_settings'];
+        togglers.forEach(toggler => {
+            document.getElementById(toggler).addEventListener('change', function() {
+                toggleForm();
+            });
         });
 
-        document.getElementById('protocol').addEventListener('change', function() {
-            toggleForm();
-        });
-
-        document.getElementById('role').addEventListener('change', function() {
-            toggleForm();
-        });
+        // set node name to `title__h1`
+        const getNodeIDFromURL = new URLSearchParams(window.location.search).get('node_id');
+        if (getNodeIDFromURL !== null) {
+            fetch(`/api/nodes/get/${getNodeIDFromURL}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('title__h1').innerText = `Настройка ${data.name}`;
+            })
+        }   
     });
     
     function toggleForm() {
-        var system = document.getElementById('system').value;
-        var protocol = document.getElementById('protocol').value;
-        var role = document.getElementById('role').value;
-        var unixWgServerForm = document.getElementById('unix-wg-server-form');
-        var SubmitButton = document.getElementById('submit-start-settings-btn');
-
-
-        if (system === 'UNIX' && protocol === 'WIREGUARD' && role === 'SERVER') {
-            unixWgServerForm.style.display = 'block';
-            unixWgServerForm.classList.add('use-this-form');
-        } else {
-            unixWgServerForm.style.display = 'none';
-            unixWgServerForm.classList.remove('use-this-form');
+        function _hideAllForms() {
+            var forms = document.getElementsByClassName('settings_form');
+            for (var i = 0; i < forms.length; i++) {
+                forms[i].style.display = 'none';
+                forms[i].classList.remove('use-this-form');
+            }
         }
+        function _makeFormActive(form_id) {
+            var form = document.getElementById(form_id);
+            form.style.display = 'block';
+            form.classList.add('use-this-form');
+        }
+
+        const system = document.getElementById('system').value;
+        const protocol = document.getElementById('protocol').value;
+        const role = document.getElementById('role').value;
+        const custom_settings = document.getElementById('custom_settings').value;
+
+        console.log("system:", system, "protocol:", protocol, "role:", role, "custom_settings:", custom_settings);
+
+        _hideAllForms();
+        if (system === 'UNIX' && protocol === 'WIREGUARD' && role === 'SERVER' && custom_settings === 'NO') {
+            _makeFormActive("form__unix-wg-server");
+        } else if (custom_settings === "YES") {
+            _makeFormActive("form__custom-settings");
+        } else {
+            alert('Not implemented yet!');
+            _hideAllForms();
+        }
+
+        // print `use-this-form` form active
+        console.log(getActiveForm());
     }
 
     function startSetup() {
@@ -55,7 +130,12 @@
             document.getElementById('submit-start-settings-btn__text').classList.add("col");
         }
 
-        var activeForm = document.querySelector('form[class="use-this-form"]');
+        const system = document.getElementById('system').value.toLowerCase();
+        const protocol = document.getElementById('protocol').value.toLowerCase();
+        const role = document.getElementById('role').value.toLowerCase();
+        const custom_settings = document.getElementById('custom_settings').value;
+
+        var activeForm = getActiveForm();
         var formData = new FormData(activeForm);
         // URL with Node ID: http://0.0.0.0:8000/pages/setup?node_id=1
         const getNodeIDFromURL = new URLSearchParams(window.location.search).get('node_id');
@@ -69,33 +149,65 @@
         }
         jsonData['server_id'] = getNodeIDFromURL;
 
-        console.log(jsonData);
-
+        console.log('jsonData:', jsonData);
         _displayLoader();
         // Make POST request
-        fetch('/api/setups/unix-wg-server', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(jsonData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Handle response data
-            _hideLoader();
-            console.log(data);
-        })
-        .catch(error => {
-            // Handle errors
-            _hideLoader();
-            console.error('There was an error with the POST request:', error);
-        });
+        if (custom_settings == "YES") {
+            const custom_commands = jsonData['custom_settings__textarea'].split("\n");
+            fetch('/api/setups/custom-setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {"commands": custom_commands, "server_id": getNodeIDFromURL}
+                )
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle response data
+                _hideLoader();
+                console.log(data);
+
+                let inputs_and_outputs = '';
+                for (let i = 0; i < Math.min(custom_commands.length, data.responses.length); i++) {
+                    inputs_and_outputs += `<u>${custom_commands[i]}</u>\n`;
+                    inputs_and_outputs += `${data.responses[i]}\n`;
+                    inputs_and_outputs += "<hr>";
+                }
+                showNotifySuccess(`Настройка выполнена успешно!`, inputs_and_outputs);
+            })
+        } else {
+            console.log(`POST request to /api/setups/${system}-${protocol}-${role}`);
+            fetch(`/api/setups/${system}-${protocol}-${role}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle response data
+                _hideLoader();
+                console.log(data);
+            })
+            .catch(error => {
+                // Handle errors
+                _hideLoader();
+                console.error('There was an error with the POST request:', error);
+            });
+        }
     }
 
     function copyValuesFromPlaceholdersToInputs() {
@@ -109,7 +221,7 @@
 
 {% block content %}
 <div class="container">
-    <h1>Настройка</h1>
+    <h1 id="title__h1">Настройка</h1>
     <form id="form-select-system-protocol-role">
         <div class="row mb-4">
             <div class="col">
@@ -136,10 +248,18 @@
                     <option value="CLIENT">CLIENT</option>
                 </select>
             </div>
+            <div class="col">
+                <label for="custom_settings">Произвольная настройка</label>
+                <select id="custom_settings" name="custom_settings" class="form-select">
+                    <option value="NO">Нет</option>
+                    <option value="YES">Да</option>
+                </select>
+            </div>
         </div>
     </form>
 
-    <form id="unix-wg-server-form" method="post" action="/setups/unix-wg-server" style="display:none;">
+    <!-- UNIX WIREGUARD SERVER FORM -->
+    <form id="form__unix-wg-server" class="settings_form" style="display:none;">
         <div class="form-group mb-3">
             <label for="address_mask">Адрес, который назначается (виртуальному) сетевому интерфейсу</label>
             <input type="text" id="address_mask" name="address_mask" class="form-control" aria-describedby="address_mask_help" placeholder="10.0.0.1/24" required>
@@ -200,6 +320,14 @@
 
     </form>
 
+    <!-- CUSTOM SETTINGS FORM -->
+    <form id="form__custom-settings" class="settings_form" style="display:none;">
+        <div class="form-group mb-3">
+            <label for="custom_settings__textarea">Свои настройки</label>
+            <textarea id="custom_settings__textarea" name="custom_settings__textarea" class="form-control" rows="10" placeholder="Введите свои команды"></textarea>
+        </div>
+    </form>
+
     <button type="Настроить" id="submit-start-settings-btn" class="btn btn-primary mt-4 mb-5" onclick="startSetup()">
         <div class="row">
             <div id="submit-start-settings-btn__loader" class="col-0" style="display: none;">
@@ -210,8 +338,6 @@
             <span id="submit-start-settings-btn__text" class="col">Настроить</span>
         </div>
     </button>
-    
-
 
     <button type="placeholders2imputs" class="btn btn-secondary mt-4 mb-5" onclick="copyValuesFromPlaceholdersToInputs()">copyValuesFromPlaceholdersToInputs</button>
 
