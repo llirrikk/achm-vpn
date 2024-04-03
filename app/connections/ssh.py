@@ -9,8 +9,11 @@ logging.getLogger("paramiko").setLevel(logging.INFO)
 
 
 class SSHManager:
-    def __init__(self, ssh_connection: paramiko.SSHClient):
+    def __init__(
+        self, ssh_connection: paramiko.SSHClient, sftp_connection: paramiko.SFTPClient
+    ):
         self.ssh = ssh_connection
+        self.sftp = sftp_connection
 
     def send(self, command: str, timeout: int = 120) -> str:
         print(f"Sending command: {command}")
@@ -26,8 +29,7 @@ class SSHManager:
 
     def send_file(self, local_file: str, remote_file: str):
         print(f"Sending file {local_file} to {remote_file}")
-        with self.ssh.open_sftp() as sftp:
-            sftp.put(local_file, remote_file, confirm=False)
+        self.sftp.put(local_file, remote_file)
 
 
 class SSHConnection:
@@ -57,10 +59,12 @@ class SSHConnection:
             username=self.login,
             password=self.password,
         )
-        return SSHManager(self.ssh)
+        self.sftp = self.ssh.open_sftp()
+        return SSHManager(self.ssh, self.sftp)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         print("[disconnect]")
+        self.sftp.close()
         self.ssh.close()
 
 
