@@ -1,10 +1,9 @@
-import enum
 from typing import Literal
 
 from pydantic import BaseModel, NonNegativeInt, SecretStr, validator
 
-from app.enums import ConnectionProtocolSchema, SystemsSchema
-from app.models.nodes import Connection, Node
+from app.enums import ConnectionProtocolSchema, SystemsSchema, VPNProtocolSchema
+from app.models.nodes import Connection, Network, Node
 
 
 class AppStatusSchema(BaseModel):
@@ -57,18 +56,34 @@ class NodeSchemaWithID(NodeSchema):
     id: int
 
 
-class ProtocolSchema(enum.StrEnum):
-    WIREGUARD = "WIREGUARD"
-    L2TP = "L2TP"
-    PP2P = "PP2P"
+class NetworkSchema(BaseModel):
+    name: str
+    protocol: VPNProtocolSchema
+    node: NodeSchemaWithID
+
+    model_config = {"from_attributes": True}
+
+    class Meta:
+        orm_model = Network
+
+
+class AggregatedNetworksSchema(BaseModel):
+    id: NonNegativeInt
+    name: str
+    protocol: VPNProtocolSchema
+    server: list[NodeSchemaWithID]
+    clients: list[NodeSchemaWithID]
 
 
 # Settings schemas
 
 
-class SettingsUnixWGServerSchema(BaseModel):
+class SettingsSchemaBase(BaseModel):
+    network_name: str
     server_id: int
 
+
+class SettingsUnixWGServerSchema(SettingsSchemaBase):
     address_mask: str
     port: NonNegativeInt
     interface: str
@@ -84,6 +99,7 @@ class SettingsUnixWGServerSchema(BaseModel):
     client_persistent_keepalive: NonNegativeInt
 
 
-class SettingsCustomSchema(BaseModel):
-    server_id: int
+class SettingsCustomSchema(SettingsSchemaBase):
+    role: Literal["SERVER", "CLIENT"]
     commands: list[str]
+    protocol: VPNProtocolSchema

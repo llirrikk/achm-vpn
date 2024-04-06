@@ -60,8 +60,17 @@
                 
                 <!-- Настроить -->
                 <td>
-                    <a href="setup?node_id={{ node.id }}">Настроить</a>
+                    <a id="do_setup__button__{{ node.id }}" href="setup?node_id={{ node.id }}" style="display: none;" class="btn btn-outline-primary">Настроить</a>
                 </td>
+                <script>
+                // uncover `do_setup__button__{node.id}` if api/nodes/networks/{node.id} returns 200
+                fetch(`/api/nodes/networks/{{ node.id }}`)
+                .then(response => {
+                    if (!response.ok) {
+                        document.getElementById(`do_setup__button__{{ node.id }}`).style.display = 'block';
+                    }
+                });
+                </script>
                 
                 <!-- Удалить -->
                 <td>
@@ -73,7 +82,7 @@
     </table>
     
     <div class="mt-4">
-        <a class="btn btn-success" href="create_node/">Создать</a>
+        <a class="btn btn-success" href="create_node/">Добавить</a>
     </div>
 </div>
 {% endblock %}

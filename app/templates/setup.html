@@ -134,10 +134,11 @@
         const protocol = document.getElementById('protocol').value.toLowerCase();
         const role = document.getElementById('role').value.toLowerCase();
         const custom_settings = document.getElementById('custom_settings').value;
+        const network_name = document.getElementById('network_name').value;
 
         var activeForm = getActiveForm();
         var formData = new FormData(activeForm);
-        // URL with Node ID: http://0.0.0.0:8000/pages/setup?node_id=1
+        // URL with Node ID: http://0.0.0.0:8000/setup?node_id=1
         const getNodeIDFromURL = new URLSearchParams(window.location.search).get('node_id');
 
 
@@ -160,7 +161,13 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(
-                    {"commands": custom_commands, "server_id": getNodeIDFromURL}
+                    {
+                        "server_id": getNodeIDFromURL,
+                        "network_name": network_name,
+                        "role": role.toUpperCase(),
+                        "commands": custom_commands,
+                        "protocol": protocol.toUpperCase(),
+                    }
                 )
             })
             .then(response => {
@@ -328,17 +335,22 @@
         </div>
     </form>
 
-    <button type="Настроить" id="submit-start-settings-btn" class="btn btn-primary mt-4 mb-5" onclick="startSetup()">
-        <div class="row">
-            <div id="submit-start-settings-btn__loader" class="col-0" style="display: none;">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Настройка...</span>
+    <!-- название сети -->
+    <div class="input-group mb-3 w-25 mt-4 mb-5" style="min-width: 350px;">
+        <input id="network_name" type="text" class="form-control" placeholder="Название сети" aria-label="Название сети" aria-describedby="button-addon2">
+        <button type="Настроить" id="submit-start-settings-btn" class="btn btn-primary" onclick="startSetup()">
+            <div class="row">
+                <div id="submit-start-settings-btn__loader" class="col-0" style="display: none;">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Настройка...</span>
+                    </div>
                 </div>
+                <span id="submit-start-settings-btn__text" class="col">Настроить</span>
             </div>
-            <span id="submit-start-settings-btn__text" class="col">Настроить</span>
-        </div>
-    </button>
+        </button>
+    </div>
 
+    <!-- debug stuff -->
     <button type="placeholders2imputs" class="btn btn-secondary mt-4 mb-5" onclick="copyValuesFromPlaceholdersToInputs()">copyValuesFromPlaceholdersToInputs</button>
 
 </div>

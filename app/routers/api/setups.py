@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.enums import VPNProtocolSchema
 from app.manager import get_node_from_id
 from app.models.sql_database import get_db
 from app.schemas import SettingsCustomSchema, SettingsUnixWGServerSchema
@@ -20,6 +21,13 @@ async def setup_custom_setup(
     node = get_node_from_id(db_session, settings_schema.server_id)
     print("Setting up custom setup...")
     responses = configure_custom_ssh(node, settings_schema)
+
+    node.add_network(
+        db_session,
+        name=settings_schema.network_name,
+        node_role=settings_schema.role,
+        vpn_protocol=settings_schema.protocol,
+    )
     return {"status": "success", "responses": responses}
 
 
@@ -31,4 +39,10 @@ async def setup_unix_wg_server(
     print("Setting up Wireguard server on UNIX...")
     configure_wireguard_server(server, settings_schema)
 
+    server.add_network(
+        db_session,
+        name=settings_schema.network_name,
+        node_role="SERVER",
+        vpn_protocol=VPNProtocolSchema.WIREGUARD,
+    )
     return {"status": "success"}

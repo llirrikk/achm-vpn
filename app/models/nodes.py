@@ -1,19 +1,21 @@
+from typing import Literal
+
 from pydantic import SecretStr
 from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from app.enums import ConnectionProtocolSchema, SystemsSchema, VPNProtocolSchema
 from app.models.base import AbstractBaseModel
-from app.enums import ConnectionProtocolSchema, SystemsSchema
 from app.utils.fernet import encrypt
 
 
 class Node(AbstractBaseModel):
     __tablename__ = "nodes"
 
-    id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, index=True)
     system = Column(Enum(SystemsSchema), nullable=False)
     connections = relationship("Connection", back_populates="node")
+    networks = relationship("Network", back_populates="node")
 
     def add_connection(self, connection: "Connection") -> "Connection":
         if len(self.connections) >= 2:
@@ -36,11 +38,38 @@ class Node(AbstractBaseModel):
                 return conn
         raise ValueError(f"Node does not have connection with protocol: {protocol}")
 
+    def add_network(
+        self,
+        db_session,
+        *,
+        name: str,
+        node_role: Literal["SERVER", "CLIENT"],
+        vpn_protocol: VPNProtocolSchema,
+    ) -> "Network":
+        existing_networks = len(self.networks)
+        if existing_networks > 0:
+            raise ValueError("Node already has network.")
+        network = Network(
+            name=name,
+            protocol=vpn_protocol,
+            node_id=self.id,
+            node=self,
+            node_role=node_role,
+        )
+        db_session.add(network)
+        self.networks.append(network)
+        db_session.commit()
+        return network
+
+    def get_network(self) -> "Network":
+        if len(self.networks) == 0:
+            raise ValueError("Node does not have any networks.")
+        return self.networks[0]
+
 
 class Connection(AbstractBaseModel):
     __tablename__ = "connections"
 
-    id = Column(Integer, primary_key=True)
     protocol = Column(Enum(ConnectionProtocolSchema), nullable=False)
     host = Column(String, nullable=False)
     port = Column(Integer, nullable=False)
@@ -61,3 +90,14 @@ class Connection(AbstractBaseModel):
             password=password,
             **kwargs,
         )
+
+
+class Network(AbstractBaseModel):
+    __tablename__ = "networks"
+
+    name = Column(String, nullable=False)
+    protocol = Column(Enum(VPNProtocolSchema), nullable=False)
+
+    node_id = Column(Integer, ForeignKey("nodes.id"))
+    node = relationship("Node", back_populates="networks")
+    node_role = Column(String, nullable=False)

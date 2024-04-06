@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        document.getElementById('nav-networks').classList.add('active');
+    });
+
+    function deleteNode(nodeId) {
+        fetch(`/api/nodes/delete/${nodeId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete node');
+            }
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Failed to delete node: ${error}`);
+        });
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Список VPN-сетей</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="col-md-3">Название</th>
+                <th class="col-md-3">Сервер</th>
+                <th class="col-md-5">Клиенты</th>
+                <th class="col-md-1"></th>
+                <th class="col-md-1"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for network in networks %}
+            <tr class="align-middle">
+                <td>{{ network.name }}</td>
+                <td>{{ network.server[0].name }} ({{ network.server[0].system }})</td>
+                <td>
+                    {% for client in network.clients %}
+                    <ul class="list-group">
+                        <li>{{ client.name }} ({{ client.system }})</li>
+                    </ul>
+                    {% endfor %}
+                </td>
+                
+                <td>
+                    <a href="monitoring?network={{ network.id }}" class="btn btn-outline-primary">Мониторинг</a>
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

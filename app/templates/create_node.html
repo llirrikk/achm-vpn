@@ -47,8 +47,8 @@
 
 {% block content %}
 <div class="container">
-    <h1>Создать устройство</h1>
-    <form id="createNodeForm" action="/pages/all_nodes">
+    <h1>Добавить устройство</h1>
+    <form id="createNodeForm">
         <div class="form-group">
             <label for="nodeName">Название</label>
             <input type="text" class="form-control" id="nodeName" name="name" required>
@@ -88,7 +88,7 @@
             </div>
         </div>
         <div class="mt-4">
-            <button onclick="createNode()" class="btn btn-success">Создать устройство</button>
+            <button onclick="createNode()" class="btn btn-success">Добавить</button>
         </div>
     </form>
 </div>

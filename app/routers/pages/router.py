@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
 
-from app.routers.api.nodes import get_all_nodes
+from app.routers.api.nodes import get_all_networks, get_all_nodes
 
-pages_router = APIRouter(prefix="/pages", tags=["pages"])
+pages_router = APIRouter(prefix="", tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -12,13 +12,13 @@ async def get_base_page(request: Request):
     return templates.TemplateResponse("base.html", {"request": request})
 
 
-@pages_router.get("/all_nodes")
+@pages_router.get("/nodes")
 async def get_all_nodes_page(
     request: Request,
     nodes=Depends(get_all_nodes),
 ):
     return templates.TemplateResponse(
-        "all_nodes.html", {"request": request, "nodes": nodes}
+        "nodes.html", {"request": request, "nodes": nodes}
     )
 
 
@@ -30,3 +30,13 @@ async def get_create_node_page(request: Request):
 @pages_router.get("/setup")
 async def get_setup_page(request: Request):
     return templates.TemplateResponse("setup.html", {"request": request})
+
+
+@pages_router.get("/networks")
+async def get_networks_page(
+    request: Request,
+    networks=Depends(get_all_networks),
+):
+    return templates.TemplateResponse(
+        "networks.html", {"request": request, "networks": networks}
+    )
