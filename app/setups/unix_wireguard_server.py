@@ -1,22 +1,11 @@
-import re
-import requests
-
 from app.connections.ssh import SSHConnection
 from app.enums import ConnectionProtocolSchema
 from app.models.nodes import Node
 from app.schemas import SettingsUnixWGServerSchema
 from app.utils.fernet import decrypt
 
-unix_server_wg_init = "sudo /dev/shm/unix-server-wg-init.sh {wg_address_mask} {wg_port} {wg_interface} {wg_client_allowed_ips} {wg_base_directory}"
-unix_server_wg_create_client_config = "sudo /dev/shm/unix-server-wg-create-client-config.sh {wg_client_config_path} {wg_client_address} {wg_client_dns} {wg_server_endpoint_host} {wg_server_endpoint_port} {wg_client_allowed_ips} {persistent_keepalive}"
-
-
-# def upload_file_to_temp_sh(local_path: str) -> str:
-#     url = "https://temp.sh/upload"
-#     with open(local_path, "rb") as file:
-#         response = requests.post(url, files={"file": file})
-#         response.raise_for_status()
-#         return response.content.decode("utf-8")
+unix_wg_server_init = "sudo /dev/shm/unix-wg-server-init.sh {wg_address_mask} {wg_port} {wg_interface} {wg_client_allowed_ips} {wg_base_directory}"
+unix_wg_server_create_client_config = "sudo /dev/shm/unix-wg-server-create-client-config.sh {wg_client_config_path} {wg_client_address} {wg_client_dns} {wg_server_endpoint_host} {wg_server_endpoint_port} {wg_client_allowed_ips} {persistent_keepalive}"
 
 
 def configure_wireguard_server(
@@ -25,37 +14,27 @@ def configure_wireguard_server(
     ssh_connection = server.get_connection(ConnectionProtocolSchema.SSH)
 
     with SSHConnection(
-        ssh_connection.host,  # type: ignore
-        login=ssh_connection.login,  # type: ignore
-        password=decrypt(ssh_connection.password),  # type: ignore
+        ssh_connection.host,  # pyright: ignore[reportArgumentType]
+        login=ssh_connection.login,  # pyright: ignore[reportArgumentType]
+        password=decrypt(ssh_connection.password),  # pyright: ignore[reportArgumentType]
     ) as ssh:
         # first file
         ssh.send_file(
-            "app/commands/unix-server-wg-init.sh",
-            "/dev/shm/unix-server-wg-init.sh",
+            "app/commands/unix-wg-server-init.sh",
+            "/dev/shm/unix-wg-server-init.sh",
         )
-        # temp_sh_path = upload_file_to_temp_sh("app/commands/unix-server-wg-init.sh")
-        # ssh.send(f"wget {temp_sh_path} -O /home/debian/unix-server-wg-init.sh")
-
-        ssh.send("sudo chmod +x /dev/shm/unix-server-wg-init.sh")
+        ssh.send("sudo chmod +x /dev/shm/unix-wg-server-init.sh")
 
         # second file
         ssh.send_file(
-            "app/commands/unix-server-wg-create-client-config.sh",
-            "/dev/shm/unix-server-wg-create-client-config.sh",
+            "app/commands/unix-wg-server-create-client-config.sh",
+            "/dev/shm/unix-wg-server-create-client-config.sh",
         )
-        # temp_sh_path = upload_file_to_temp_sh(
-        #     "app/commands/unix-server-wg-create-client-config.sh"
-        # )
-        # ssh.send(
-        #     f"wget {temp_sh_path} -O /home/debian/unix-server-wg-create-client-config.sh"
-        # )
+        ssh.send("sudo chmod +x /dev/shm/unix-wg-server-create-client-config.sh")
 
-        ssh.send("sudo chmod +x /dev/shm/unix-server-wg-create-client-config.sh")
-
-        print("unix_server_wg_init: start")
+        print("unix_wg_server_init: start")
         result = ssh.send(
-            unix_server_wg_init.format(
+            unix_wg_server_init.format(
                 wg_address_mask=settings_schema.address_mask,
                 wg_port=settings_schema.port,
                 wg_interface=settings_schema.interface,
@@ -65,9 +44,9 @@ def configure_wireguard_server(
         )
         print(result)
 
-        print("unix_server_wg_create_client_config: start")
+        print("unix_wg_server_create_client_config: start")
         result = ssh.send(
-            unix_server_wg_create_client_config.format(
+            unix_wg_server_create_client_config.format(
                 wg_client_config_path=settings_schema.client_config_directory,
                 wg_client_address=settings_schema.client_address_mask,
                 wg_client_dns=settings_schema.client_dns,

@@ -15,7 +15,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 DeclarativeModelBase = declarative_base()
 
 
-def get_db() -> SessionLocal:  # type: ignore
+def get_db() -> SessionLocal:  # pyright: ignore[reportInvalidTypeForm]
     database = SessionLocal()
     try:
         yield database

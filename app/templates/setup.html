@@ -7,14 +7,48 @@
             // options
             title: `<strong>${message}</strong>`,
             message: `<pre>${additional}</pre>`,
-        icon: 'glyphicon glyphicon-ok',
-            url: 'https://github.com/mouse0270/bootstrap-notify',
-            target: '_blank'
+            icon: 'glyphicon glyphicon-ok',
         },{
             // settings
             element: 'body',
             //position: null,
             type: "success",
+            allow_dismiss: true,
+            //newest_on_top: false,
+            showProgressbar: false,
+            placement: {
+                from: "top",
+                align: "center"
+            },
+            offset: 20,
+            spacing: 10,
+            z_index: 1031,
+            delay: 3300,
+            timer: 1000,
+            url_target: '_blank',
+            mouse_over: null,
+            animate: {
+                enter: 'animated fadeInDown',
+                exit: 'animated fadeOutRight'
+            },
+            onShow: null,
+            onShown: null,
+            onClose: null,
+            onClosed: null,
+            icon_type: 'class',
+        });
+    }
+    function showNotifyError(message) {
+        $.notify({
+            // options
+            title: `<strong>Error</strong>`,
+            message: `<pre>${message}</pre>`,
+            icon: 'glyphicon glyphicon-exclamation-sign',
+        },{
+            // settings
+            element: 'body',
+            //position: null,
+            type: "danger",
             allow_dismiss: true,
             //newest_on_top: false,
             showProgressbar: false,
@@ -69,6 +103,7 @@
             fetch(`/api/nodes/get/${getNodeIDFromURL}`)
             .then(response => {
                 if (!response.ok) {
+                    showNotifyError(`Failed to get node: ${response.statusText}`);
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
@@ -89,6 +124,10 @@
         }
         function _makeFormActive(form_id) {
             var form = document.getElementById(form_id);
+            if (form === null) {
+                alert(`Error: Form with id ${form_id} not found!`);
+                _hideAllForms();
+            }
             form.style.display = 'block';
             form.classList.add('use-this-form');
         }
@@ -101,13 +140,10 @@
         console.log("system:", system, "protocol:", protocol, "role:", role, "custom_settings:", custom_settings);
 
         _hideAllForms();
-        if (system === 'UNIX' && protocol === 'WIREGUARD' && role === 'SERVER' && custom_settings === 'NO') {
-            _makeFormActive("form__unix-wg-server");
-        } else if (custom_settings === "YES") {
+        if (custom_settings === "YES") {
             _makeFormActive("form__custom-settings");
         } else {
-            alert('Not implemented yet!');
-            _hideAllForms();
+            _makeFormActive(`form__${system.toLowerCase()}-${protocol.toLowerCase()}-${role.toLowerCase()}`);
         }
 
         // print `use-this-form` form active
@@ -148,7 +184,8 @@
         for (var [key, value] of formData.entries()) {
             jsonData[key] = value;
         }
-        jsonData['server_id'] = getNodeIDFromURL;
+        jsonData['node_id'] = getNodeIDFromURL;
+        jsonData['network_name'] = network_name;
 
         console.log('jsonData:', jsonData);
         _displayLoader();
@@ -162,7 +199,7 @@
                 },
                 body: JSON.stringify(
                     {
-                        "server_id": getNodeIDFromURL,
+                        "node_id": getNodeIDFromURL,
                         "network_name": network_name,
                         "role": role.toUpperCase(),
                         "commands": custom_commands,
@@ -172,6 +209,8 @@
             })
             .then(response => {
                 if (!response.ok) {
+                    _hideLoader();
+                    showNotifyError(`Failed to setup: ${response.statusText}`);
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
@@ -200,6 +239,7 @@
             })
             .then(response => {
                 if (!response.ok) {
+                    showNotifyError(`Failed to setup: ${response.statusText}`);
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
@@ -266,7 +306,7 @@
     </form>
 
     <!-- UNIX WIREGUARD SERVER FORM -->
-    <form id="form__unix-wg-server" class="settings_form" style="display:none;">
+    <form id="form__unix-wireguard-server" class="settings_form" style="display:none;">
         <div class="form-group mb-3">
             <label for="address_mask">Адрес, который назначается (виртуальному) сетевому интерфейсу</label>
             <input type="text" id="address_mask" name="address_mask" class="form-control" aria-describedby="address_mask_help" placeholder="10.0.0.1/24" required>
@@ -324,8 +364,57 @@
             <input type="number" id="client_persistent_keepalive" name="client_persistent_keepalive" class="form-control" placeholder="20" required>
             <small>Если соединение проходит с узла за NAT на общедоступный узел, узел, расположенный за NAT, должен регулярно отправлять исходящий ping-запрос, чтобы поддерживать двунаправленное соединение в рабочем состоянии в таблице подключений маршрутизатора NAT.</small>
         </div>
-
     </form>
+
+    <!-- UNIX WIREGUARD CLIENT FORM -->
+    <form id="form__unix-wireguard-client" class="settings_form" style="display:none;">
+        <div class="form-group mb-3">
+            <label for="private_key">Приватный ключ клиента</label>
+            <input type="text" name="private_key" class="form-control" placeholder="sK9J8dNGM9WpkqMk/quKvfw/AgOT9CXExIKIlba1CmI=" required>
+            <small>Приватный ключ WireGuard для узла, сгенерированный с помощью: <code>wg genkey > example.key</code> (не должен покидать узел, на котором он сгенерирован)</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="address_mask">IP-адрес клиента</label>
+            <input type="text" name="address_mask" class="form-control" placeholder="10.0.0.2/32" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="dns_server">DNS-сервер</label>
+            <input type="text" name="dns_server" class="form-control" placeholder="8.8.8.8" required>
+            <small>Сервер доменных имен, используемый для преобразования имен хостов в IP-адреса для клиентов VPN</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="server_public_key">Публичный ключ сервера</label>
+            <input type="text" name="server_public_key" class="form-control" placeholder="Mr+LrABHypveJFsoR5gkcoPEBnloOqbbg5LTzfui2Bc=" required>
+            <small>Публичный ключ WireGuard для сервера, сгенерированный с помощью: <code>wg pubkey < example.key > example.pub</code> (должен быть известен клиенту)</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="server_host">IP-адрес сервера</label>
+            <input type="text" name="server_host" class="form-control" placeholder="192.168.1.122" required>
+            <small>Определяет общедоступный адрес для удаленного узла. Это следует не учитывать для узлов, находящихся за NAT, или узлов, у которых нет стабильной общедоступной пары IP:ПОРТ. Как правило, это нужно определить только на главном сервере, но это также может быть определено на других общедоступных узлах со стабильными IP-адресами.</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="server_port">Порт сервера</label>
+            <input type="number" name="server_port" class="form-control" placeholder="51830" required>
+            <small>Когда узел работает как общедоступный сервер передачи данных, он должен строго определить порт для прослушивания входящих VPN-подключений из общедоступного Интернета. Клиенты, не выполняющие функции ретрансляторов, не должны устанавливать это значение.</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="server_allowed_ips">Разрешенные IP-адреса сервера</label>
+            <input type="text" name="server_allowed_ips" class="form-control" placeholder="0.0.0.0/0" required>
+            <small>Определяет диапазоны IP-адресов, для которых узел будет перенаправлять трафик. Для простых клиентов это обычно один адрес (VPN-адрес самого простого клиента). Для серверов передачи данных – диапазон IP-адресов или подсетей, для которых сервер ретрансляции способен перенаправлять трафик. Несколько IP-адресов и подсетей могут быть указаны с использованием обозначений CIDR IPv4 или IPv6, разделенных запятыми (начиная с одного адреса /32 или /128, вплоть до 0.0.0.0/0 и ::/0, чтобы указать маршрут по умолчанию для отправки всего интернет-трафика и VPN-трафика через этот узел).</small> 
+        </div>
+        <div class="form-group mb-3">
+            <label for="server_persistent_keepalive">Таймаут Ping-запросов сервера</label>
+            <input type="number" name="server_persistent_keepalive" class="form-control" placeholder="20" required>
+            <small>Если соединение проходит с узла за NAT на общедоступный узел, узел, расположенный за NAT, должен регулярно отправлять исходящий ping-запрос, чтобы поддерживать двунаправленное соединение в рабочем состоянии в таблице подключений маршрутизатора NAT.</small>
+        </div>
+        <div class="form-group mb-3">
+            <label for="base_directory">Директория для сохранения конфигурационных файлов клиента</label>
+            <input type="text" name="base_directory" class="form-control" placeholder="/dev/shm" required>
+            <small>Директория, в которой клиентский конфигурационный файл будет сохранен на узле во время настройки</small>
+        </div>
+    </form>
+        
+
 
     <!-- CUSTOM SETTINGS FORM -->
     <form id="form__custom-settings" class="settings_form" style="display:none;">

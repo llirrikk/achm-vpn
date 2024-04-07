@@ -13,9 +13,9 @@ def configure_custom_ssh(
     responses: list[str] = []
 
     with SSHConnection(
-        ssh_connection.host,  # type: ignore
-        login=ssh_connection.login,  # type: ignore
-        password=decrypt(ssh_connection.password),  # type: ignore
+        ssh_connection.host,  # pyright: ignore[reportArgumentType]
+        login=ssh_connection.login,  # pyright: ignore[reportArgumentType]
+        password=decrypt(ssh_connection.password),  # pyright: ignore[reportArgumentType]
     ) as ssh:
         for command in settings_schema.commands:
             result = ssh.send(command)

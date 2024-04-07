@@ -33,7 +33,7 @@
                 <th class="col-md-3">Название</th>
                 <th class="col-md-3">Система</th>
                 <th class="col-md-5">Подключения</th>
-                <th class="col-md-1"></th>
+                <th class="col-md-1">VPN-сети</th>
                 <th class="col-md-1"></th>
             </tr>
         </thead>
@@ -60,7 +60,13 @@
                 
                 <!-- Настроить -->
                 <td>
-                    <a id="do_setup__button__{{ node.id }}" href="setup?node_id={{ node.id }}" style="display: none;" class="btn btn-outline-primary">Настроить</a>
+                    {% if node.networks %}
+                        {% for network in node.networks %}
+                            <span>{{ network.name }}&nbsp;({{ network.protocol }})</span><br>
+                        {% endfor %}
+                    {% else %}
+                        <a id="do_setup__button__{{ node.id }}" href="setup?node_id={{ node.id }}" style="display: none;" class="btn btn-outline-primary">Настроить</a>
+                    {% endif %}
                 </td>
                 <script>
                 // uncover `do_setup__button__{node.id}` if api/nodes/networks/{node.id} returns 200

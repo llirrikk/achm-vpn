@@ -1,7 +1,6 @@
 import logging
 from typing import Literal
 
-from cryptography.fernet import Fernet
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

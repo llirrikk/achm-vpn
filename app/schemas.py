@@ -30,9 +30,19 @@ class ConnectionSchema(BaseModel):
 
 
 class NodeSchema(BaseModel):
+    class NetworkShortSchema(BaseModel):
+        name: str
+        protocol: VPNProtocolSchema
+
+        model_config = {"from_attributes": True}
+
+        class Meta:
+            orm_model = Network
+
     name: str
     system: SystemsSchema
     connections: list[ConnectionSchema]
+    networks: list[NetworkShortSchema]
 
     model_config = {"from_attributes": True}
 
@@ -80,10 +90,32 @@ class AggregatedNetworksSchema(BaseModel):
 
 class SettingsSchemaBase(BaseModel):
     network_name: str
-    server_id: int
+    node_id: int
+
+
+class SettingsCustomSchema(SettingsSchemaBase):
+    role: Literal["SERVER", "CLIENT"]
+    commands: list[str]
+    protocol: VPNProtocolSchema
 
 
 class SettingsUnixWGServerSchema(SettingsSchemaBase):
+    """
+    {wg_address_mask}
+    {wg_port}
+    {wg_interface}
+    {wg_client_allowed_ips}
+    {wg_base_directory}
+
+    {wg_client_config_path}
+    {wg_client_address}
+    {wg_client_dns}
+    {wg_server_endpoint_host}
+    {wg_server_endpoint_port}
+    {wg_client_allowed_ips}
+    {persistent_keepalive}
+    """
+
     address_mask: str
     port: NonNegativeInt
     interface: str
@@ -99,7 +131,25 @@ class SettingsUnixWGServerSchema(SettingsSchemaBase):
     client_persistent_keepalive: NonNegativeInt
 
 
-class SettingsCustomSchema(SettingsSchemaBase):
-    role: Literal["SERVER", "CLIENT"]
-    commands: list[str]
-    protocol: VPNProtocolSchema
+class SettingsUnixWGClientSchema(SettingsSchemaBase):
+    """
+    {wg_client_private_key}
+    {wg_client_address}
+    {wg_client_dns_server}
+    {wg_server_public_key}
+    {wg_server_host}
+    {wg_server_port}
+    {wg_server_allowed_ips}
+    {wg_server_persistent_keepalive}
+    {wg_base_directory}
+    """
+
+    private_key: str
+    address_mask: str
+    dns_server: str
+    server_public_key: str
+    server_host: str
+    server_port: NonNegativeInt
+    server_allowed_ips: str
+    server_persistent_keepalive: NonNegativeInt
+    base_directory: str

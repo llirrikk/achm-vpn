@@ -66,11 +66,11 @@ async def get_all_networks(
         str, tuple[list[NodeSchemaWithID], list[NodeSchemaWithID], str, int]
     ] = {}
     for network in networks:
-        unique_networks.setdefault(network.name, ([], [], network.protocol, network.id))  # type: ignore
-        if network.node_role == "SERVER":  # type: ignore
-            unique_networks[network.name][0].append(network.node)  # type: ignore
+        unique_networks.setdefault(network.name, ([], [], network.protocol, network.id))  # pyright: ignore[reportArgumentType]
+        if network.node_role == "SERVER":  # pyright: ignore[reportGeneralTypeIssues]
+            unique_networks[network.name][0].append(network.node)  # pyright: ignore[reportArgumentType]
         else:
-            unique_networks[network.name][1].append(network.node)  # type: ignore
+            unique_networks[network.name][1].append(network.node)  # pyright: ignore[reportArgumentType]
 
     unique_networks_to_serialize = []
     for network_name, nodes in unique_networks.items():

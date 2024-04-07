@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.routers.api.nodes import get_all_networks, get_all_nodes
@@ -7,9 +8,10 @@ pages_router = APIRouter(prefix="", tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-@pages_router.get("/base")
+@pages_router.get("/")
 async def get_base_page(request: Request):
-    return templates.TemplateResponse("base.html", {"request": request})
+    """redirect to /nodes"""
+    return RedirectResponse(url="/nodes")
 
 
 @pages_router.get("/nodes")
