@@ -42,7 +42,7 @@ class NodeSchema(BaseModel):
     name: str
     system: SystemsSchema
     connections: list[ConnectionSchema]
-    networks: list[NetworkShortSchema]
+    networks: list[NetworkShortSchema] = []
 
     model_config = {"from_attributes": True}
 
@@ -80,12 +80,23 @@ class NetworkSchema(BaseModel):
 class AggregatedNetworksSchema(BaseModel):
     id: NonNegativeInt
     name: str
+    grafana_url: str | None
     protocol: VPNProtocolSchema
     server: list[NodeSchemaWithID]
     clients: list[NodeSchemaWithID]
 
 
-# Settings schemas
+# Monitoring setup schemas
+
+
+class MonitoringSetupSchema(BaseModel):
+    network_id: NonNegativeInt
+    node_id: NonNegativeInt
+    commands: list[str]
+    grafana_url: str
+
+
+# Node settings schemas
 
 
 class SettingsSchemaBase(BaseModel):

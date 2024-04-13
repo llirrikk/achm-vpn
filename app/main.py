@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.models.base import AbstractBaseModel
 from app.models.sql_database import engine
+from app.routers.api.monitoring_setups import monitoring_setups_router
 from app.routers.api.nodes import node_router
 from app.routers.api.nodes_connections import node_connections_router
 from app.routers.api.setups import setups_router
@@ -19,6 +20,7 @@ app = FastAPI(
 app.include_router(node_router)
 app.include_router(node_connections_router)
 app.include_router(setups_router)
+app.include_router(monitoring_setups_router)
 
 # HTML
 app.include_router(pages_router)

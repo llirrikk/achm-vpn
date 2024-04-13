@@ -6,8 +6,8 @@
         document.getElementById('nav-networks').classList.add('active');
     });
 
-    function deleteNode(nodeId) {
-        fetch(`/api/nodes/delete/${nodeId}`, {
+    function removeGrafanaURL(networkID) {
+        fetch(`/api/monitoring-setups/${networkID}`, {
             method: 'DELETE'
         })
         .then(response => {
@@ -21,6 +21,8 @@
             alert(`Failed to delete node: ${error}`);
         });
     }
+
+
 </script>
 {% endblock %}
 
@@ -33,8 +35,8 @@
                 <th class="col-md-3">Название</th>
                 <th class="col-md-3">Сервер</th>
                 <th class="col-md-5">Клиенты</th>
-                <th class="col-md-1"></th>
-                <th class="col-md-1"></th>
+                <th class="col-md-2">Дашборд</th>
+                <th class="col-md-1 text-center">Мониторинг</th>
             </tr>
         </thead>
         <tbody>
@@ -50,9 +52,20 @@
                     {% endfor %}
                 </td>
                 
-                <td>
-                    <a href="monitoring?network={{ network.id }}" class="btn btn-outline-primary">Мониторинг</a>
+                {% if network.grafana_url %}
+                <td colspan="1">    
+                    <a href="{{ network.grafana_url }}" class="btn btn-warning" style="width: 7em;" target="_blank" rel="noopener noreferrer">Grafana</a>
                 </td>
+
+                <td class="text-center">
+                    <button class="btn btn-outline-danger" onclick="removeGrafanaURL({{ network.id }})">Удалить</button>
+                </td>
+                {% else %}
+                <td colspan="2" class="text-center">    
+                    <a href="monitoring?network_server_id={{ network.server[0].id }}&network_id={{ network.id }}" class="btn btn-outline-primary" style="width: 17em;">Настроить</a>
+                </td>
+                {% endif %}
+
 
             </tr>
             {% endfor %}

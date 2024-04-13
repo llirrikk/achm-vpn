@@ -10,6 +10,91 @@
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-notify@3.1.3/bootstrap-notify.js"></script>
 
+    <script>
+        function showNotifySuccess(message, additional) {
+            $.notify({
+                // options
+                title: `<strong>${message}</strong>`,
+                message: `<pre>${additional}</pre>`,
+                icon: 'glyphicon glyphicon-ok',
+            },{
+                // settings
+                element: 'body',
+                //position: null,
+                type: "success",
+                allow_dismiss: true,
+                //newest_on_top: false,
+                showProgressbar: false,
+                placement: {
+                    from: "top",
+                    align: "center"
+                },
+                offset: 20,
+                spacing: 10,
+                z_index: 1031,
+                delay: 3300,
+                timer: 1000,
+                url_target: null,
+                mouse_over: null,
+                animate: {
+                    enter: 'animated fadeInDown',
+                    exit: 'animated fadeOutRight'
+                },
+                onShow: null,
+                onShown: null,
+                onClose: null,
+                onClosed: null,
+                icon_type: 'class',
+            });
+        }
+        function showNotifyError(message) {
+            $.notify({
+                // options
+                title: `<strong>Ошибка</strong>`,
+                message: `<pre>${message}</pre>`,
+                icon: 'glyphicon glyphicon-exclamation-sign',
+            },{
+                // settings
+                element: 'body',
+                //position: null,
+                type: "danger",
+                allow_dismiss: false,
+                //newest_on_top: false,
+                showProgressbar: false,
+                placement: {
+                    from: "top",
+                    align: "center"
+                },
+                offset: 20,
+                spacing: 10,
+                z_index: 1031,
+                delay: 3300,
+                timer: 1000,
+                url_target: null,
+                mouse_over: null,
+                animate: {
+                    enter: 'animated fadeInDown',
+                    exit: 'animated fadeOutRight'
+                },
+                onShow: null,
+                onShown: null,
+                onClose: null,
+                onClosed: null,
+                icon_type: 'class',
+            });
+        }
+    </script>
+
+    <style>
+        a[target=_blank]::after {
+            content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+            margin: 0 3px 0 5px;
+        }
+        .alert {
+           width: 70%;
+        }
+    </style>
+
     {% block head %}{% endblock %}
 
 </head>

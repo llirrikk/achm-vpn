@@ -100,7 +100,7 @@
         // set node name to `title__h1`
         const getNodeIDFromURL = new URLSearchParams(window.location.search).get('node_id');
         if (getNodeIDFromURL !== null) {
-            fetch(`/api/nodes/get/${getNodeIDFromURL}`)
+            fetch(`/api/nodes/${getNodeIDFromURL}`)
             .then(response => {
                 if (!response.ok) {
                     showNotifyError(`Failed to get node: ${response.statusText}`);
@@ -109,7 +109,7 @@
                 return response.json();
             })
             .then(data => {
-                document.getElementById('title__h1').innerText = `Настройка ${data.name}`;
+                document.getElementById('title__h1').innerHTML = `Настройка <code>${data.name}</code>`;
             })
         }   
     });

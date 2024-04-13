@@ -101,3 +101,4 @@ class Network(AbstractBaseModel):
     node_id = Column(Integer, ForeignKey("nodes.id"))
     node = relationship("Node", back_populates="networks")
     node_role = Column(String, nullable=False)
+    grafana_url = Column(String, nullable=True)

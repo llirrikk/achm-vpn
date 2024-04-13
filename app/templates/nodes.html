@@ -7,7 +7,7 @@
     });
 
     function deleteNode(nodeId) {
-        fetch(`/api/nodes/delete/${nodeId}`, {
+        fetch(`/api/nodes/${nodeId}`, {
             method: 'DELETE'
         })
         .then(response => {

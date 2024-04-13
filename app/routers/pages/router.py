@@ -42,3 +42,8 @@ async def get_networks_page(
     return templates.TemplateResponse(
         "networks.html", {"request": request, "networks": networks}
     )
+
+
+@pages_router.get("/monitoring")
+async def get_monitoring_page(request: Request):
+    return templates.TemplateResponse("monitoring.html", {"request": request})

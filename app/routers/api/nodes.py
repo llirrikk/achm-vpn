@@ -19,7 +19,7 @@ node_router = APIRouter(
 )
 
 
-@node_router.get("/get_all")
+@node_router.get("/")
 async def get_all_nodes(
     db_session: Session = Depends(get_db),
 ) -> list[NodeSchemaWithID]:
@@ -28,7 +28,7 @@ async def get_all_nodes(
     return type_adapter.validate_python(nodes)
 
 
-@node_router.get("/get/{node_id}")
+@node_router.get("/{node_id}")
 async def get_node(node_id: int, db_session: Session = Depends(get_db)):
     node = db_session.query(Node).filter(Node.id == node_id).first()
     if not node:
@@ -47,7 +47,7 @@ async def create_node(node_schema: NodeSchema, db_session: Session = Depends(get
     return {"status": "ok", "node_id": node.id}
 
 
-@node_router.delete("/delete/{node_id}")
+@node_router.delete("/{node_id}")
 async def delete_node(node_id: int, db_session: Session = Depends(get_db)):
     node = db_session.query(Node).filter(Node.id == node_id).first()
     if not node:
@@ -63,10 +63,13 @@ async def get_all_networks(
 ) -> list[AggregatedNetworksSchema]:
     networks = db_session.query(Network).all()
     unique_networks: dict[
-        str, tuple[list[NodeSchemaWithID], list[NodeSchemaWithID], str, int]
+        str, tuple[list[NodeSchemaWithID], list[NodeSchemaWithID], str, int, str | None]
     ] = {}
     for network in networks:
-        unique_networks.setdefault(network.name, ([], [], network.protocol, network.id))  # pyright: ignore[reportArgumentType]
+        unique_networks.setdefault(
+            network.name,  # pyright: ignore[reportArgumentType]
+            ([], [], network.protocol, network.id, network.grafana_url),  # pyright: ignore[reportArgumentType]
+        )
         if network.node_role == "SERVER":  # pyright: ignore[reportGeneralTypeIssues]
             unique_networks[network.name][0].append(network.node)  # pyright: ignore[reportArgumentType]
         else:
@@ -74,11 +77,12 @@ async def get_all_networks(
 
     unique_networks_to_serialize = []
     for network_name, nodes in unique_networks.items():
-        server, clients, network_protocol, network_id = nodes
+        server, clients, network_protocol, network_id, grafana_url = nodes
         unique_networks_to_serialize.append(
             {
                 "id": network_id,
                 "name": network_name,
+                "grafana_url": grafana_url,
                 "protocol": network_protocol,
                 "server": server,
                 "clients": clients,

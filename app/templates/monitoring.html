@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        document.getElementById('nav-networks').classList.add('active');
+        
+        onPageLoad();
+    });
+
+    const COMMANDS_TO_SETUP_MONITORING = new Map([
+        ['WIREGUARD-UNIX', `mkdir wg_monitoring && cd $_
+cat <<EOF > prometheus.yml
+global:
+scrape_interval: 10s
+evaluation_interval: 10s
+
+scrape_configs:
+- job_name: 'prometheus'
+
+    scrape_interval: 3s
+
+    static_configs:
+    - targets: ['127.0.0.1:9586']
+EOF
+cat <<EOF > grafana_datasource.yaml
+    apiVersion: 1
+
+datasources:
+- name: Prometheus
+  type: prometheus
+  access: proxy
+  orgId: 1
+  url: http://127.0.0.1:9090
+  basicAuth: false
+  isDefault: true
+  jsonData:
+    timeInterval: "5s"
+    httpMethod: POST
+EOF
+cat <<EOF > docker-compose.yml
+    version: '3'
+
+volumes:
+  prometheus_data: {}
+
+services:
+  prometheus_wireguard_exporter:
+    image: mindflavor/prometheus-wireguard-exporter
+    restart: always
+    container_name: prometheus_wireguard_exporter
+    entrypoint:
+        - /usr/local/bin/prometheus_wireguard_exporter
+        - -a      # PROMETHEUS_WIREGUARD_EXPORTER_PREPEND_SUDO_ENABLED
+        - "true"
+        - -d      # EXPORT_LATEST_HANDSHAKE_DELAY
+        - "true"
+        - -n      # PROMETHEUS_WIREGUARD_EXPORTER_CONFIG_FILE_NAMES
+        - "/usr/local/bin/wg0.conf"
+    cap_add:
+      - NET_ADMIN
+    expose:
+      - 9586
+    volumes:
+      - /etc/wireguard/wg0.conf:/usr/local/bin/wg0.conf
+    network_mode: host
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    depends_on:
+      - prometheus_wireguard_exporter
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    container_name: prometheus
+    expose:
+      - 9090
+    network_mode: host
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    user: root
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana_datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+    environment:
+      TZ: "Europe/Moscow"
+    expose:
+      - 3000
+    network_mode: host
+EOF
+docker compose up -d`],
+        ['OPENVPN-UNIX', 'mkdir openvpn_monitoring && cd $_']
+    ]);
+
+    function onPageLoad() {
+        const getServerIDFromURL = new URLSearchParams(window.location.search).get('network_server_id');
+        if (getServerIDFromURL === null) {
+            showNotifyError('Failed to get network server ID from URL');
+            return;
+        }
+
+        fetch(`/api/nodes/${getServerIDFromURL}`)
+        .then(response => {
+            if (!response.ok) {
+                showNotifyError(`Failed to get node: ${response.statusText}`);
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const systemFromData = data.system;
+            const protocolFromData = data.networks[0].protocol;
+            document.getElementById('title__h1').innerHTML = `Настройка мониторинга сети <code>${data.networks[0].name}</code>`;
+            document.getElementById('title__p').innerHTML = `Протокол: ${protocolFromData}</br>Система: ${systemFromData}`;
+
+            var picked_commands = COMMANDS_TO_SETUP_MONITORING.get(`${protocolFromData}-${systemFromData}`);
+            if (picked_commands === undefined) {
+                picked_commands = '';
+                console.log('Available commands:', COMMANDS_TO_SETUP_MONITORING.keys());
+                let _available_commands_keys_with_newline = Array.from(COMMANDS_TO_SETUP_MONITORING.keys()).map(key => `<li>'<b>${key}</b>'</li>`).join('');
+                console.log('Available commands:', _available_commands_keys_with_newline);
+
+                showNotifyError(`Получении команд для '<b>${protocolFromData}-${systemFromData}</b>'.\nДоступны команды для: <ul>${_available_commands_keys_with_newline}</ul>`);
+            }
+            document.getElementById('custom_settings__textarea').value = picked_commands;
+        })
+    }
+    
+    function startSetupMonitoring() {
+        function _displayLoader() {
+            document.getElementById('submit-start-settings-btn__loader').style.display = 'block';
+            document.getElementById('submit-start-settings-btn__loader').classList.remove("col-0");
+            document.getElementById('submit-start-settings-btn__loader').classList.add("col-1");
+            document.getElementById('submit-start-settings-btn__text').classList.remove("col");
+            document.getElementById('submit-start-settings-btn__text').classList.add("col-5");
+        }
+        function _hideLoader() {
+            document.getElementById('submit-start-settings-btn__loader').style.display = 'none';
+            document.getElementById('submit-start-settings-btn__loader').classList.remove("col-1");
+            document.getElementById('submit-start-settings-btn__loader').classList.add("col-0");
+            document.getElementById('submit-start-settings-btn__text').classList.remove("col-5");
+            document.getElementById('submit-start-settings-btn__text').classList.add("col");
+        }
+        
+        // URL with Node ID: http://0.0.0.0:8000/monitoring?network_server_id=4&network_id=3
+        const getServerIDFromURL = new URLSearchParams(window.location.search).get('network_server_id');
+        const getNetworkIDFromURL = new URLSearchParams(window.location.search).get('network_id');
+
+        var jsonData = {};
+        jsonData['node_id'] = getServerIDFromURL;
+        jsonData['network_id'] = getNetworkIDFromURL;
+        jsonData['commands'] = document.getElementById('custom_settings__textarea').value.split('\n');
+        jsonData['grafana_url'] = document.getElementById('grafana_url__input').value;
+
+        console.log('jsonData:', jsonData);
+        _displayLoader();
+        
+        fetch('/api/monitoring-setups', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                _hideLoader();
+                showNotifyError(`Failed to setup monitoring: ${response.statusText}`);
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Handle response data
+            _hideLoader();
+            console.log(data);
+
+            let inputs_and_outputs = '';
+            for (let i = 0; i < Math.min(jsonData['commands'].length, data.responses.length); i++) {
+                inputs_and_outputs += `<u>${jsonData['commands'][i]}</u>\n`;
+                inputs_and_outputs += `${data.responses[i]}\n`;
+                inputs_and_outputs += "<hr>";
+            }
+            showNotifySuccess(`Настройка выполнена успешно!`, inputs_and_outputs);
+        })
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 id="title__h1">Настройка мониторинга сети</h1>
+    <p id="title__p"></p>
+
+    <!-- CUSTOM SETTINGS FORM -->
+    <form id="form__custom-settings" class="settings_form">
+        <div class="form-group mb-3">
+            <label for="custom_settings__textarea">Настройки</label>
+            <textarea id="custom_settings__textarea" name="custom_settings__textarea" class="form-control" rows="15" placeholder="Введите свои команды"></textarea>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="grafana_url__input">Grafana Dashboard URL</label>
+            <input id="grafana_url__input" name="grafana_url__input" class="form-control" rows="10" placeholder="http://192.168.64.7:3000/d/-Ka00AIGz/protocol?orgId=1&refresh=30s"></textarea>
+        </div>
+    </form>
+
+    <button type="Настроить" id="submit-start-settings-btn" class="btn btn-primary" onclick="startSetupMonitoring()">
+        <div class="row">
+            <div id="submit-start-settings-btn__loader" class="col-0" style="display: none;">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Настройка...</span>
+                </div>
+            </div>
+            <span id="submit-start-settings-btn__text" class="col">Настроить</span>
+        </div>
+    </button>
+
+</div>
+{% endblock %}
