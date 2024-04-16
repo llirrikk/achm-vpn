@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        document.getElementById('nav-scheduler').classList.add('active');
+        
+        onPageLoad();
+    });
+
+    function onPageLoad() {
+        const getNodeIDFromURL = new URLSearchParams(window.location.search).get('node_id');
+        if (getNodeIDFromURL === null) {
+            showNotifyError('Failed to get network node ID from URL');
+            return;
+        }
+
+        fetch(`/api/nodes/${getNodeIDFromURL}`)
+        .then(response => {
+            if (!response.ok) {
+                showNotifyError(`Failed to get node: ${response.statusText}`);
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const systemFromData = data.system;
+            const protocolFromData = data.networks[0].protocol;
+            document.getElementById('title__h1').innerHTML = `Планировка задач в сети <code>${data.networks[0].name}</code>`;
+            document.getElementById('title__p').innerHTML = `(через <code>${data.name}</code>)`;
+        })
+    }
+    
+    function startSetupMonitoring() {
+        function _displayLoader() {
+            document.getElementById('submit-start-settings-btn__loader').style.display = 'block';
+            document.getElementById('submit-start-settings-btn__loader').classList.remove("col-0");
+            document.getElementById('submit-start-settings-btn__loader').classList.add("col-1");
+            document.getElementById('submit-start-settings-btn__text').classList.remove("col");
+            document.getElementById('submit-start-settings-btn__text').classList.add("col-5");
+        }
+        function _hideLoader() {
+            document.getElementById('submit-start-settings-btn__loader').style.display = 'none';
+            document.getElementById('submit-start-settings-btn__loader').classList.remove("col-1");
+            document.getElementById('submit-start-settings-btn__loader').classList.add("col-0");
+            document.getElementById('submit-start-settings-btn__text').classList.remove("col-5");
+            document.getElementById('submit-start-settings-btn__text').classList.add("col");
+        }
+        
+        // URL with Node ID: http://0.0.0.0:8000/monitoring?network_server_id=4&network_id=3
+        const getServerIDFromURL = new URLSearchParams(window.location.search).get('network_server_id');
+        const getNetworkIDFromURL = new URLSearchParams(window.location.search).get('network_id');
+
+        var jsonData = {};
+        jsonData['node_id'] = getServerIDFromURL;
+        jsonData['network_id'] = getNetworkIDFromURL;
+        jsonData['commands'] = document.getElementById('custom_settings__textarea').value.split('\n');
+        jsonData['grafana_url'] = document.getElementById('grafana_url__input').value;
+
+        console.log('jsonData:', jsonData);
+        _displayLoader();
+        
+        fetch('/api/monitoring-setups', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                _hideLoader();
+                showNotifyError(`Failed to setup monitoring: ${response.statusText}`);
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Handle response data
+            _hideLoader();
+            console.log(data);
+
+            let inputs_and_outputs = '';
+            for (let i = 0; i < Math.min(jsonData['commands'].length, data.responses.length); i++) {
+                inputs_and_outputs += `<u>${jsonData['commands'][i]}</u>\n`;
+                inputs_and_outputs += `${data.responses[i]}\n`;
+                inputs_and_outputs += "<hr>";
+            }
+            showNotifySuccess(`Настройка выполнена успешно!`, inputs_and_outputs);
+        })
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 id="title__h1">Планировка задач</h1>
+    <p id="title__p"></p>
+
+    <!-- CUSTOM SETTINGS FORM -->
+    <form id="form__custom-settings" class="settings_form">
+        <div class="form-group mb-3">
+            <label for="custom_settings__textarea">Настройки</label>
+            <textarea id="custom_settings__textarea" name="custom_settings__textarea" class="form-control" rows="15" placeholder="Введите свои команды"></textarea>
+        </div>
+
+
+        <div class="row mb-4">
+            <div class="col form-group">
+                <label for="year__input">Год</label>
+                <input id="year__input" name="year" class="form-control" placeholder="2024"></input>
+                <small>Принимает значение года в 4-х значном виде</small>
+            </div>
+        
+            <div class="col form-group">
+                <label for="month__input">Месяц</label>
+                <input id="month__input" name="month" class="form-control" placeholder="4"></input>
+                <small>Принимает значение от 1 до 12</small>
+            </div>
+        
+            <div class="col form-group">
+                <label for="day__input">День</label>
+                <input id="day__input" name="day" class="form-control" placeholder="1"></input>
+                <small>Принимает значение от 1 до 31</small>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col form-group">
+                <label for="week__input">Неделя</label>
+                <input id="week__input" name="week" class="form-control" placeholder="1"></input>
+                <small>Принимает значения от 1 до 53 (номер недели в году)</small>
+            </div>
+        
+            <div class="col form-group">
+                <label for="day_of_week__input">День недели</label>
+                <input id="day_of_week__input" name="day_of_week" class="form-control" placeholder="mon"></input>
+                <small>Принимает значения от 0 до 6, или mon, tue, wed, thu, fri, sat, sun (день недели)</small>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col form-group">
+                <label for="hour__input">Час</label>
+                <input id="hour__input" name="hour" class="form-control" placeholder="0"></input>
+                <small>Принимает значения от 0 до 23</small>
+            </div>
+        
+            <div class="col form-group">
+                <label for="minute__input">Минута</label>
+                <input id="minute__input" name="minute" class="form-control" placeholder="0"></input>
+                <small>Принимает значения от 0 до 59</small>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col form-group">
+                <label for="start_date__input">Начальная дата</label>
+                <input id="start_date__input" name="start_date" class="form-control" placeholder="YYYY-MM-DD HH:MM:SS"></input>
+                <small>Начало выполнения задания</small>
+            </div>
+        
+            <div class="col form-group">
+                <label for="end_date__input">Конечная дата</label>
+                <input id="end_date__input" name="end_date" class="form-control" placeholder="YYYY-MM-DD HH:MM:SS"></input>
+                <small>Окончание выполнения задания</small>
+            </div>
+        </div>        
+        
+    </form>
+
+    <button type="Настроить" id="submit-start-settings-btn" class="btn btn-primary mb-5" onclick="startSetupMonitoring()">
+        <div class="row">
+            <div id="submit-start-settings-btn__loader" class="col-0" style="display: none;">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Настройка...</span>
+                </div>
+            </div>
+            <span id="submit-start-settings-btn__text" class="col">Настроить</span>
+        </div>
+    </button>
+
+</div>
+{% endblock %}

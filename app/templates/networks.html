@@ -33,8 +33,9 @@
         <thead>
             <tr>
                 <th class="col-md-3">Название</th>
-                <th class="col-md-3">Сервер</th>
+                <th class="col-md-4">Сервер</th>
                 <th class="col-md-5">Клиенты</th>
+                <th class="col-md-2">Задачи</th>
                 <th class="col-md-2">Дашборд</th>
                 <th class="col-md-1 text-center">Мониторинг</th>
             </tr>
@@ -51,6 +52,11 @@
                     </ul>
                     {% endfor %}
                 </td>
+
+                <td>
+                    <a href="scheduler?node_id={{ network.server[0].id }}" class="btn btn-outline-primary">Запланировать</a>
+                </td>
+
                 
                 {% if network.grafana_url %}
                 <td colspan="1">    

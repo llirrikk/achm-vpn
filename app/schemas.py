@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, NonNegativeInt, SecretStr, validator
+from pydantic import BaseModel, Field, NonNegativeInt, SecretStr, validator
 
 from app.enums import ConnectionProtocolSchema, SystemsSchema, VPNProtocolSchema
 from app.models.nodes import Connection, Network, Node
@@ -84,6 +85,24 @@ class AggregatedNetworksSchema(BaseModel):
     protocol: VPNProtocolSchema
     server: list[NodeSchemaWithID]
     clients: list[NodeSchemaWithID]
+
+
+class SchedulerSchema(BaseModel):
+    node_id: NonNegativeInt
+    command: str
+
+    year: int | None = Field(None, ge=1000, le=9999, examples=[None, 1000])
+    month: int | None = Field(None, ge=1, le=12, examples=[None, 1])
+    day: int | None = Field(None, ge=1, le=31, examples=[None, 1])
+    week: int | None = Field(None, ge=1, le=53, examples=[None, 1])
+    day_of_week: Literal["sun", "mon", "tue", "wed", "thu", "fri", "sat"] | None = (
+        Field(None, examples=[None, "mon"])
+    )
+    hour: int | None = Field(None, ge=0, le=23, examples=[None, 0])
+    minute: int | None = Field(None, ge=0, le=59, examples=[None, 0])
+    second: int | None | Literal["*"] = Field(None, examples=[None, "*"])
+    start_date: datetime | str | None = Field(None, examples=[None])
+    end_date: datetime | str | None = Field(None, examples=[None])
 
 
 # Monitoring setup schemas

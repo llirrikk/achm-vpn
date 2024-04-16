@@ -25,7 +25,7 @@ async def setup_custom_setup(
 ):
     node = get_node_from_id(db_session, settings_schema.node_id)
     print("Setting up custom setup...")
-    responses = configure_custom_ssh(node, settings_schema)
+    responses = configure_custom_ssh(node, settings_schema.commands)
 
     node.add_network(
         db_session,
