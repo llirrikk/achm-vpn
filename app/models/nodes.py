@@ -102,3 +102,9 @@ class Network(AbstractBaseModel):
     node = relationship("Node", back_populates="networks")
     node_role = Column(String, nullable=False)
     grafana_url = Column(String, nullable=True)
+
+
+class Event(AbstractBaseModel):
+    __tablename__ = "events"
+
+    message = Column(String, nullable=False)

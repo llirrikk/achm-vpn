@@ -115,6 +115,16 @@ class MonitoringSetupSchema(BaseModel):
     grafana_url: str
 
 
+class EventSchema(BaseModel):
+    id: NonNegativeInt
+    created_at: datetime | str
+    message: str
+
+    @validator("created_at")
+    def parse_created_at(cls, value):
+        return datetime.strftime(value, "%d.%b.%Y %H:%M:%S")
+
+
 # Node settings schemas
 
 

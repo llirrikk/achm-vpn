@@ -1,4 +1,4 @@
-from app.models.nodes import Network, Node
+from app.models.nodes import Event, Network, Node
 
 
 def get_node_from_id(db_session, node_id: int) -> Node:
@@ -25,3 +25,7 @@ def delete_grafa_url_from_network(db_session, network: Network) -> None:
     network.grafana_url = None  # type: ignore
     db_session.commit()
     print(f"Grafana URL deleted from network {network.name}")
+
+
+def get_all_events(db_session) -> list[Event]:
+    return db_session.query(Event).all()

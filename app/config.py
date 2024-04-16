@@ -1,8 +1,11 @@
+import locale
 import logging
 from typing import Literal
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
 
 
 class Settings(BaseSettings):

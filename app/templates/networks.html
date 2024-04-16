@@ -38,6 +38,7 @@
                 <th class="col-md-2">Задачи</th>
                 <th class="col-md-2">Дашборд</th>
                 <th class="col-md-1 text-center">Мониторинг</th>
+                <th class="col-md-2">События</th>
             </tr>
         </thead>
         <tbody>
@@ -72,6 +73,14 @@
                 </td>
                 {% endif %}
 
+                <td>
+                    <a href="events?network_server_id={{ network.server[0].id }}" class="btn btn-outline-primary position-relative">
+                        Смотреть
+                        <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle">
+                            <span class="visually-hidden">События</span>
+                        </span>
+                    </a>
+                </td>
 
             </tr>
             {% endfor %}

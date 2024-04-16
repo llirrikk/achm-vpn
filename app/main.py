@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.config import scheduler
 from app.models.base import AbstractBaseModel
 from app.models.sql_database import engine
+from app.routers.api.events import events_router
 from app.routers.api.monitoring_setups import monitoring_setups_router
 from app.routers.api.nodes import node_router
 from app.routers.api.nodes_connections import node_connections_router
@@ -32,6 +33,7 @@ app.include_router(node_connections_router)
 app.include_router(setups_router)
 app.include_router(monitoring_setups_router)
 app.include_router(scheduler_router)
+app.include_router(events_router)
 
 # HTML
 app.include_router(pages_router)
