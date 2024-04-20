@@ -2,6 +2,7 @@ import time
 import uuid
 
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 
 from app.config import scheduler
 from app.manager import send_message_to_audit
@@ -70,6 +71,9 @@ async def record_audit(request: Request, call_next):
         )
     response = await call_next(request)
     return response
+
+
+app.mount("/misc", StaticFiles(directory="app/misc"), name="misc")
 
 
 # API
