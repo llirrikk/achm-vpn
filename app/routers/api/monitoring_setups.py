@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.manager import (
     delete_grafa_url_from_network,
     get_network_from_id,
     get_node_from_id,
+    send_message_to_audit,
     set_grafana_url_to_network,
 )
 from app.models.sql_database import get_db
@@ -21,8 +22,16 @@ monitoring_setups_router = APIRouter(
 
 @monitoring_setups_router.post("/")
 async def setup_custom_monitoring_setup(
-    settings_schema: MonitoringSetupSchema, db_session: Session = Depends(get_db)
+    request: Request,
+    settings_schema: MonitoringSetupSchema,
+    db_session: Session = Depends(get_db),
 ):
+    send_message_to_audit(
+        db_session,
+        f"Производится настройка мониторинга {settings_schema}",
+        request.client.host,
+        request.client.port,
+    )
     node = get_node_from_id(db_session, settings_schema.node_id)
     network = get_network_from_id(db_session, settings_schema.network_id)
     print("Setting up monitoring...")
@@ -34,8 +43,14 @@ async def setup_custom_monitoring_setup(
 
 @monitoring_setups_router.delete("/{network_id}")
 async def delete_monitoring_setup(
-    network_id: int, db_session: Session = Depends(get_db)
+    request: Request, network_id: int, db_session: Session = Depends(get_db)
 ):
+    send_message_to_audit(
+        db_session,
+        f"Удаление настройки мониторинга сети {network_id}",
+        request.client.host,
+        request.client.port,
+    )
     network = get_network_from_id(db_session, network_id)
     print("Deleting monitoring setup...")
     delete_grafa_url_from_network(db_session, network)

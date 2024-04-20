@@ -108,3 +108,10 @@ class Event(AbstractBaseModel):
     __tablename__ = "events"
 
     message = Column(String, nullable=False)
+
+
+class Audit(AbstractBaseModel):
+    __tablename__ = "audit"
+
+    message = Column(String, nullable=False)
+    ip = Column(String, nullable=True)

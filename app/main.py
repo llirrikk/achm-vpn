@@ -1,8 +1,12 @@
-from fastapi import FastAPI
+import time
+import uuid
+
+from fastapi import FastAPI, Request
 
 from app.config import scheduler
+from app.manager import send_message_to_audit
 from app.models.base import AbstractBaseModel
-from app.models.sql_database import engine
+from app.models.sql_database import SessionLocal, engine
 from app.routers.api.events import events_router
 from app.routers.api.monitoring_setups import monitoring_setups_router
 from app.routers.api.nodes import node_router
@@ -16,15 +20,56 @@ AbstractBaseModel.metadata.create_all(bind=engine)
 
 
 def start_scheduler():
-    scheduler.start()
+    with SessionLocal() as db_session:
+        send_message_to_audit(db_session, "Система запущена")
+        scheduler.start()
+        send_message_to_audit(db_session, "Планировщик задач запущен")
     print("scheduler inited")
+
+
+def on_shutdown():
+    with SessionLocal() as db_session:
+        send_message_to_audit(db_session, "Система остановлена")
+        scheduler.shutdown()
+        send_message_to_audit(db_session, "Планировщик задач остановлен")
+    print("scheduler shutdown")
 
 
 app = FastAPI(
     title="VPN Setup and Monitoring",
     description="System for VPN Setup and Monitoring.",
     on_startup=[start_scheduler],
+    on_shutdown=[scheduler.shutdown],
 )
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+
+@app.middleware("http")
+async def add_response_uuid_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Response-UUID"] = str(uuid.uuid4())
+    return response
+
+
+@app.middleware("http")
+async def record_audit(request: Request, call_next):
+    with SessionLocal() as db_session:
+        send_message_to_audit(
+            db_session,
+            f"Получен запрос {request.method} {request.url}",
+            request.client.host,
+            request.client.port,
+        )
+    response = await call_next(request)
+    return response
 
 
 # API

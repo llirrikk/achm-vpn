@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.routers.api.audit import get_audit
 from app.routers.api.events import get_events
 from app.routers.api.nodes import get_all_networks, get_all_nodes
 
@@ -59,4 +60,11 @@ async def get_scheduler_page(request: Request):
 async def get_enents_page(request: Request, events=Depends(get_events)):
     return templates.TemplateResponse(
         "events.html", {"request": request, "events": events}
+    )
+
+
+@pages_router.get("/audit")
+async def get_audit_page(request: Request, audit=Depends(get_audit)):
+    return templates.TemplateResponse(
+        "audit.html", {"request": request, "audit": audit}
     )

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.config import scheduler
 from app.enums import ConnectionProtocolSchema
-from app.manager import get_node_from_id
+from app.manager import get_node_from_id, send_message_to_audit
 from app.models.nodes import Connection, Node
 from app.models.sql_database import get_db
 from app.schemas import SchedulerSchema
@@ -49,6 +49,9 @@ async def setup_custom_setup(
 ) -> dict[str, str]:
     node = get_node_from_id(db_session, scheduler_schema.node_id)
     print(f"Setting up scheduler for {node=}")
+    send_message_to_audit(
+        db_session, f"Произведена настройка планировщика на узле {node.name}"
+    )
     schedule_job(
         scheduler_schema,
         node,

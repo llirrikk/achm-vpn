@@ -3,29 +3,13 @@
 {% block head %}
 <script>
     document.addEventListener("DOMContentLoaded", function(){
-        document.getElementById('nav-events').classList.add('active');
+        document.getElementById('nav-audit').classList.add('active');
         
         onPageLoad();
     });
 
     function onPageLoad() {
-        const getServerIDFromURL = new URLSearchParams(window.location.search).get('network_server_id');
-        if (getServerIDFromURL === null) {
-            showNotifyError('Failed to get network ID from URL');
-            return;
-        }
-
-        fetch(`/api/nodes/${getServerIDFromURL}`)
-        .then(response => {
-            if (!response.ok) {
-                showNotifyError(`Failed to get node: ${response.statusText}`);
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('title__h1').innerHTML = `События сети <code>${data.networks[0].name}</code>`;
-        })
+        
     }
     
 </script>
@@ -33,7 +17,7 @@
 
 {% block content %}
 <div class="container">
-    <h1 id="title__h1">События</h1>
+    <h1 id="title__h1">Аудит</h1>
     <p id="title__p"></p>
     
     <table class="table table-hover">
@@ -41,17 +25,25 @@
             <tr>
                 <th scope="col-md-1">#</th>
                 <th scope="col-md-4" style="width: 13em;">Время</th>
+                <th scope="col-md-2" style="width: 13em;">IP</th>
                 <th scope="col-md-5">Сообщение</th>
             </tr>
         </thead>
         <tbody>
-            {% for event in events %}
+            {% for event in audit|reverse %}
             <tr>
                 <td>
                     {{ event.id }}
                 </td>
                 <td>
                     {{ event.created_at.strftime('%H:%M%:%S %d.%m.%Y') }}
+                </td>
+                <td>
+                    {% if event.ip == "None:None" %}
+                        Неизвестно
+                    {% else %}
+                        {{ event.ip }}
+                    {% endif %}
                 </td>
                 <td>
                     {{ event.message }}

@@ -16,7 +16,9 @@ def configure_wireguard_server(
     with SSHConnection(
         ssh_connection.host,  # pyright: ignore[reportArgumentType]
         login=ssh_connection.login,  # pyright: ignore[reportArgumentType]
-        password=decrypt(ssh_connection.password),  # pyright: ignore[reportArgumentType]
+        password=decrypt(
+            ssh_connection.password
+        ),  # pyright: ignore[reportArgumentType]
     ) as ssh:
         # first file
         ssh.send_file(

@@ -18,7 +18,9 @@ def configure_custom_ssh(
     with SSHConnection(
         connection_to_be_used.host,  # pyright: ignore[reportArgumentType]
         login=connection_to_be_used.login,  # pyright: ignore[reportArgumentType]
-        password=decrypt(connection_to_be_used.password),  # pyright: ignore[reportArgumentType]
+        password=decrypt(
+            connection_to_be_used.password
+        ),  # pyright: ignore[reportArgumentType]
     ) as ssh:
         for command in commands:
             result = ssh.send(command)

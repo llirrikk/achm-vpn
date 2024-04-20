@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.enums import VPNProtocolSchema
-from app.manager import get_node_from_id
+from app.manager import get_node_from_id, send_message_to_audit
 from app.models.sql_database import get_db
 from app.schemas import (
     SettingsCustomSchema,
@@ -21,12 +21,20 @@ setups_router = APIRouter(
 
 @setups_router.post("/custom-setup")
 async def setup_custom_setup(
-    settings_schema: SettingsCustomSchema, db_session: Session = Depends(get_db)
+    request: Request,
+    settings_schema: SettingsCustomSchema,
+    db_session: Session = Depends(get_db),
 ):
     node = get_node_from_id(db_session, settings_schema.node_id)
     print("Setting up custom setup...")
-    responses = configure_custom_ssh(node, settings_schema.commands)
+    send_message_to_audit(
+        db_session,
+        f"Произведена настройка кастомного сервера на узле {node.name}",
+        request.client.host,
+        request.client.port,
+    )
 
+    responses = configure_custom_ssh(node, settings_schema.commands)
     node.add_network(
         db_session,
         name=settings_schema.network_name,
@@ -38,10 +46,19 @@ async def setup_custom_setup(
 
 @setups_router.post("/unix-wireguard-server")
 async def setup_unix_wg_server(
-    settings_schema: SettingsUnixWGServerSchema, db_session: Session = Depends(get_db)
+    request: Request,
+    settings_schema: SettingsUnixWGServerSchema,
+    db_session: Session = Depends(get_db),
 ):
     server = get_node_from_id(db_session, settings_schema.node_id)
     print("Setting up Wireguard server on UNIX...")
+    send_message_to_audit(
+        db_session,
+        f"Произведена настройка Wireguard сервера на узле {server.name}",
+        request.client.host,
+        request.client.port,
+    )
+
     configure_wireguard_server(server, settings_schema)
 
     server.add_network(
@@ -55,10 +72,19 @@ async def setup_unix_wg_server(
 
 @setups_router.post("/unix-wireguard-client")
 async def setup_unix_wg_client(
-    settings_schema: SettingsUnixWGClientSchema, db_session: Session = Depends(get_db)
+    request: Request,
+    settings_schema: SettingsUnixWGClientSchema,
+    db_session: Session = Depends(get_db),
 ) -> dict[str, str]:
     client = get_node_from_id(db_session, settings_schema.node_id)
     print("Setting up Wireguard server on UNIX...")
+    send_message_to_audit(
+        db_session,
+        f"Произведена настройка Wireguard клиента на узле {client.name}",
+        request.client.host,
+        request.client.port,
+    )
+
     configure_wireguard_client(client, settings_schema)
 
     client.add_network(

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.manager import send_message_to_audit
 from app.models.nodes import Connection, Node
 from app.models.sql_database import get_db
 from app.schemas import (
@@ -18,11 +19,18 @@ node_connections_router = APIRouter(
 
 @node_connections_router.post("/{node_id}/add")
 async def create_connection(
+    request: Request,
     node_id: int,
     connection_schema: ConnectionSchema,
     db_session: Session = Depends(get_db),
 ):
     # Create connection for node. Node can have only two connections: SSH and TELNET
+    send_message_to_audit(
+        db_session,
+        f"Создано новое соединение для узла с id {node_id}",
+        request.client.host,
+        request.client.port,
+    )
     node = db_session.query(Node).filter(Node.id == node_id).one_or_none()
     if not node:
         return JSONResponse({"status": "Node not found"}, status_code=404)
@@ -40,10 +48,17 @@ async def create_connection(
 
 @node_connections_router.get("/{node_id}/<connection_type>")
 async def get_connection(
+    request: Request,
     node_id: int,
     connection_type: ConnectionProtocolSchema,
     db_session: Session = Depends(get_db),
 ):
+    send_message_to_audit(
+        db_session,
+        f"Запрошено соединение {connection_type} для узла с id {node_id}",
+        request.client.host,
+        request.client.port,
+    )
     node = db_session.query(Node).filter(Node.id == node_id).one_or_none()
     if not node:
         return JSONResponse({"status": "Node not found"}, status_code=404)
