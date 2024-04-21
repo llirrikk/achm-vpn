@@ -1,5 +1,5 @@
 from app.models.nodes import Audit, Event, Network, Node, Proxy
-from app.schemas import ProxyCreateSchema
+from app.schemas import EventCreateSchema, ProxyCreateSchema
 
 
 def get_node_from_id(db_session, node_id: int) -> Node:
@@ -37,6 +37,14 @@ def delete_grafa_url_from_network(db_session, network: Network) -> None:
 def get_all_events(db_session) -> list[Event]:
     send_message_to_audit(db_session, "Запрошены все события")
     return db_session.query(Event).all()
+
+
+def create_event_db(db_session, event: EventCreateSchema) -> Event:
+    new_event = Event(message=event.message)
+    db_session.add(new_event)
+    db_session.commit()
+    send_message_to_audit(db_session, f"Полечено новое событие: {event.message}")
+    return new_event
 
 
 def get_all_audit(db_session) -> list[Audit]:

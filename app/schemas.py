@@ -125,6 +125,10 @@ class EventSchema(BaseModel):
         return datetime.strftime(value, "%d.%b.%Y %H:%M:%S")
 
 
+class EventCreateSchema(BaseModel):
+    message: str
+
+
 class AuditSchema(EventSchema):
     pass
 
