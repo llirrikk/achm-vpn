@@ -34,7 +34,9 @@ async def setup_custom_setup(
         request.client.port,
     )
 
-    responses = configure_custom_ssh(node, settings_schema.commands)
+    responses = await configure_custom_ssh(
+        node, settings_schema.commands, proxy_address=settings_schema.proxy_address
+    )
     node.add_network(
         db_session,
         name=settings_schema.network_name,

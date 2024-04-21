@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "CRITICAL"] = "INFO"
     database_url: str = "sqlite:///database.sqlite3"
     fernet_key: bytes = b"3QCDVuzCEWcO0G3J-3gA7W1MguhjCby2ZgsiiEZYfgo="
+    rabbit_mq_url: str = "amqp://guest:guest@localhost/"
 
 
 settings = Settings()

@@ -1,4 +1,5 @@
-from app.models.nodes import Audit, Event, Network, Node
+from app.models.nodes import Audit, Event, Network, Node, Proxy
+from app.schemas import ProxyCreateSchema
 
 
 def get_node_from_id(db_session, node_id: int) -> Node:
@@ -40,6 +41,20 @@ def get_all_events(db_session) -> list[Event]:
 
 def get_all_audit(db_session) -> list[Audit]:
     return db_session.query(Audit).all()
+
+
+def get_all_proxy(db_session) -> list[Proxy]:
+    send_message_to_audit(db_session, "Запрошены все прокси")
+    return db_session.query(Proxy).all()
+
+
+def create_proxy_db(db_session, proxy: ProxyCreateSchema) -> None:
+    new_proxy = Proxy(name=proxy.name, address=proxy.address)
+    db_session.add(new_proxy)
+    db_session.commit()
+    send_message_to_audit(
+        db_session, f"Создан новый прокси {proxy.name} с адресом {proxy.address}"
+    )
 
 
 def send_message_to_audit(

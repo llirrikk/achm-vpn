@@ -12,6 +12,7 @@ from app.routers.api.events import events_router
 from app.routers.api.monitoring_setups import monitoring_setups_router
 from app.routers.api.nodes import node_router
 from app.routers.api.nodes_connections import node_connections_router
+from app.routers.api.proxy import proxy_router
 from app.routers.api.scheduler import scheduler_router
 from app.routers.api.setups import setups_router
 from app.routers.pages.router import pages_router
@@ -83,6 +84,7 @@ app.include_router(setups_router)
 app.include_router(monitoring_setups_router)
 app.include_router(scheduler_router)
 app.include_router(events_router)
+app.include_router(proxy_router)
 
 # HTML
 app.include_router(pages_router)

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        document.getElementById('nav-proxy').classList.add('active');
+        
+        onPageLoad();
+    });
+
+    function createProxy() {
+        var name = document.getElementById('name').value;
+        var address = document.getElementById('address').value;
+
+        fetch('/api/proxy/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                address: address
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            showNotifySuccess('Успешно', 'Прокси создан');
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            showNotifyError('Ошибка при создании прокси');
+        });
+    
+    }
+    
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 id="title__h1">Прокси</h1>
+    <p id="title__p"></p>
+    
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col-md-1" style="width: 1em;">#</th>
+                <th scope="col-md-1" style="width: 3em;">Название</th>
+                <th scope="col-md-1" style="width: 10em;">Адрес</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proxy in proxies %}
+            <tr>
+                <td>
+                    {{ proxy.id }}
+                </td>
+                <td>
+                    {{ proxy.name }}
+                </td>
+                <td>
+                    {{ proxy.address }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+
+    <div class="container mt-5">
+        <div class="row d-flex justify-content-center">
+            <div class="col-2">
+                <label for="name">Название</label>
+                <input type="text" class="form-control" id="name" placeholder="Название">
+            </div>
+            <div class="col-2">
+                <label for="address">Адрес</label>
+                <input type="text" class="form-control" id="address" placeholder="Адрес">
+            </div>
+            <div class="w-100"></div>
+            <div class="col-4 align-middle mt-2">
+                <button type="submit" class="btn btn-primary form-control" onclick="createProxy()">Создать</button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+{% endblock %}

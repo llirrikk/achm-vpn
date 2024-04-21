@@ -27,7 +27,7 @@
             const systemFromData = data.system;
             const protocolFromData = data.networks[0].protocol;
             document.getElementById('title__h1').innerHTML = `Планировка задач в сети <code>${data.networks[0].name}</code>`;
-            document.getElementById('title__p').innerHTML = `(через <code>${data.name}</code>)`;
+            document.getElementById('title__p').innerHTML = `(на <code>${data.name}</code>)`;
         })
     }
     
@@ -56,6 +56,11 @@
         jsonData['network_id'] = getNetworkIDFromURL;
         jsonData['commands'] = document.getElementById('custom_settings__textarea').value.split('\n');
         jsonData['grafana_url'] = document.getElementById('grafana_url__input').value;
+        
+        const proxy = document.getElementById('proxy').value;
+        if (proxy !== 'null') {
+            jsonData['proxy'] = proxy;
+        }
 
         console.log('jsonData:', jsonData);
         _displayLoader();
@@ -99,6 +104,16 @@
 
     <!-- CUSTOM SETTINGS FORM -->
     <form id="form__custom-settings" class="settings_form">
+        <div class="mb-3">
+            <label for="proxy">Прокси</label>
+            <select id="proxy" name="proxy" class="form-select">
+                <option value="null">Не использовать</option>
+                {% for proxy in proxies %}
+                    <option value="{{ proxy.address }}">{{ proxy.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
         <div class="form-group mb-3">
             <label for="custom_settings__textarea">Настройки</label>
             <textarea id="custom_settings__textarea" name="custom_settings__textarea" class="form-control" rows="15" placeholder="Введите свои команды"></textarea>

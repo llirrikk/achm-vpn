@@ -45,7 +45,11 @@
             {% for network in networks %}
             <tr class="align-middle">
                 <td>{{ network.name }}</td>
-                <td>{{ network.server[0].name }} ({{ network.server[0].system }})</td>
+                <td>
+                    {% if network.server[0] %}
+                        {{ network.server[0].name }} ({{ network.server[0].system }})
+                    {% endif %}
+                    </td>
                 <td>
                     {% for client in network.clients %}
                     <ul class="list-group">
@@ -55,8 +59,11 @@
                 </td>
 
                 <td>
+                    {% if network.server[0] %}
                     <a href="scheduler?node_id={{ network.server[0].id }}" class="btn btn-outline-primary">Запланировать</a>
+                    {% endif %}
                 </td>
+                    
 
                 
                 {% if network.grafana_url %}
@@ -69,17 +76,21 @@
                 </td>
                 {% else %}
                 <td colspan="2" class="text-center">    
+                    {% if network.server[0] %}
                     <a href="monitoring?network_server_id={{ network.server[0].id }}&network_id={{ network.id }}" class="btn btn-outline-primary" style="width: 17em;">Настроить</a>
+                    {% endif %}
                 </td>
                 {% endif %}
 
                 <td>
+                    {% if network.server[0] %}
                     <a href="events?network_server_id={{ network.server[0].id }}" class="btn btn-outline-primary position-relative">
                         Смотреть
                         <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle">
                             <span class="visually-hidden">События</span>
                         </span>
                     </a>
+                    {% endif %}
                 </td>
 
             </tr>

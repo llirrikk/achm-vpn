@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from app.routers.api.audit import get_audit
 from app.routers.api.events import get_events
 from app.routers.api.nodes import get_all_networks, get_all_nodes
+from app.routers.api.proxy import get_proxies
 
 pages_router = APIRouter(prefix="", tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
@@ -32,8 +33,10 @@ async def get_create_node_page(request: Request):
 
 
 @pages_router.get("/setup")
-async def get_setup_page(request: Request):
-    return templates.TemplateResponse("setup.html", {"request": request})
+async def get_setup_page(request: Request, proxies=Depends(get_proxies)):
+    return templates.TemplateResponse(
+        "setup.html", {"request": request, "proxies": proxies}
+    )
 
 
 @pages_router.get("/networks")
@@ -52,14 +55,23 @@ async def get_monitoring_page(request: Request):
 
 
 @pages_router.get("/scheduler")
-async def get_scheduler_page(request: Request):
-    return templates.TemplateResponse("scheduler.html", {"request": request})
+async def get_scheduler_page(request: Request, proxies=Depends(get_proxies)):
+    return templates.TemplateResponse(
+        "scheduler.html", {"request": request, "proxies": proxies}
+    )
 
 
 @pages_router.get("/events")
 async def get_enents_page(request: Request, events=Depends(get_events)):
     return templates.TemplateResponse(
         "events.html", {"request": request, "events": events}
+    )
+
+
+@pages_router.get("/proxy")
+async def get_proxy_page(request: Request, proxies=Depends(get_proxies)):
+    return templates.TemplateResponse(
+        "proxy.html", {"request": request, "proxies": proxies}
     )
 
 

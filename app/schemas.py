@@ -129,12 +129,24 @@ class AuditSchema(EventSchema):
     pass
 
 
+class ProxySchema(BaseModel):
+    id: NonNegativeInt
+    name: str
+    address: str
+
+
+class ProxyCreateSchema(BaseModel):
+    name: str
+    address: str
+
+
 # Node settings schemas
 
 
 class SettingsSchemaBase(BaseModel):
     network_name: str
     node_id: int
+    proxy_address: str | None = None
 
 
 class SettingsCustomSchema(SettingsSchemaBase):

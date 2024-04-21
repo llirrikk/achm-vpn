@@ -110,6 +110,13 @@ class Event(AbstractBaseModel):
     message = Column(String, nullable=False)
 
 
+class Proxy(AbstractBaseModel):
+    __tablename__ = "proxies"
+
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=False)  # amqp://guest:guest@localhost/
+
+
 class Audit(AbstractBaseModel):
     __tablename__ = "audit"
 

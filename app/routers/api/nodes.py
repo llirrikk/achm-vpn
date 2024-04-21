@@ -151,6 +151,7 @@ async def get_all_networks(
             }
         )
 
+    print(f"{unique_networks_to_serialize=}")
     type_adapter = TypeAdapter(list[AggregatedNetworksSchema])
     return type_adapter.validate_python(unique_networks_to_serialize)
 
