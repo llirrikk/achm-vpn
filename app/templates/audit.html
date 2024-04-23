@@ -24,19 +24,19 @@
         <thead>
             <tr>
                 <th scope="col-md-1">#</th>
-                <th scope="col-md-4" style="width: 13em;">Время</th>
+                <th scope="col-md-4" style="width: 13em;">Дата и время</th>
                 <th scope="col-md-2" style="width: 13em;">IP</th>
                 <th scope="col-md-5">Сообщение</th>
             </tr>
         </thead>
         <tbody>
             {% for event in audit|reverse %}
-            <tr>
+            <tr class="{% if 'Получен запрос' in event.message %}table-light{% elif 'Система запущена' in event.message or 'Планировщик задач запущен' in event.message %}table-dark{% elif 'Создан новый' in event.message %}table-success{% elif 'Удален' in event.message %}table-danger{% elif 'Произведена настройка' in event.message %}table-warning{% endif %}">
                 <td>
                     {{ event.id }}
                 </td>
                 <td>
-                    {{ event.created_at.strftime('%H:%M%:%S %d.%m.%Y') }}
+                    {{ event.created_at.strftime('%d.%m.%Y, %H:%M:%S') }}
                 </td>
                 <td>
                     {% if event.ip == "None:None" %}
