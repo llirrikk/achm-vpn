@@ -3,6 +3,8 @@ services:
     build: .
     image: acnm-vpn
     hostname: acnm-vpn
+    volumes:
+      - /home/kirill/database.sqlite3:/app/database.sqlite3
     ports:
       - 8000:8000
     command: [ "/bin/sh", "entrypoint.sh" ]
