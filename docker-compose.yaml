@@ -1,0 +1,17 @@
+services:
+  acnm-vpn:
+    build: .
+    image: acnm-vpn
+    hostname: acnm-vpn
+    ports:
+      - 8000:8000
+    command: [ "/bin/sh", "entrypoint.sh" ]
+
+  nginx:
+    volumes:
+      - /etc/letsencrypt/live/tahtali.adoge.ru/fullchain.pem:/ssl/fullchain.pem
+      - /etc/letsencrypt/live/tahtali.adoge.ru/privkey.pem:/ssl/privkey.pem
+    build: nginx
+    ports:
+      - "80:80"
+      - "443:443"
