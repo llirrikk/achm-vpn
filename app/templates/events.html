@@ -40,7 +40,7 @@
         <thead>
             <tr>
                 <th scope="col-md-1">#</th>
-                <th scope="col-md-4" style="width: 13em;">Дата и время</th>
+                <th scope="col-md-4" style="width: 15em;">Дата и время</th>
                 <th scope="col-md-5">Сообщение</th>
             </tr>
         </thead>
@@ -51,7 +51,7 @@
                     {{ event.id }}
                 </td>
                 <td>
-                    {{ event.created_at.strftime('%%d.%m.%Y, %H:%M:%S') }}
+                    {{ event.created_at.strftime('%d.%m.%Y, %H:%M:%S') }}
                 </td>
                 <td>
                     {{ event.message }}
