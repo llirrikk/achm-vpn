@@ -1,4 +1,4 @@
-.PHONY: run
+.PHONY: run init
 
 run:
 	python run.py
